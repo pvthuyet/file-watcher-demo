@@ -1,5 +1,6 @@
 #pragma once
 
+#include "circle_map.h"
 #include "directory_watcher_base.h"
 #include "unnecessary_directory.h"
 
@@ -14,6 +15,7 @@ namespace died
 		void do_notify(file_notify_info info) final;
 
 	private:
-		died::fat::UnnecessaryDirectory mRules;
+		died::fat::UnnecessaryDirectory mRules; //++ TODO
+		circle_map<std::wstring, file_notify_info, 3> mRename;
 	};
 }

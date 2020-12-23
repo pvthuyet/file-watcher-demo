@@ -2,6 +2,21 @@
 
 namespace died
 {
+	bool operator==(file_notify_info const& lhs, file_notify_info const& rhs)
+	{
+		return lhs.mAction == rhs.mAction && lhs.mPath == rhs.mPath;
+	}
+
+	file_notify_info::operator bool() const noexcept
+	{
+		return mAction > 0 && !mPath.empty();
+	}
+
+	std::wstring file_notify_info::get_key() const
+	{
+		return std::to_wstring(mAction) + get_path_wstring();
+	}
+
 	unsigned long file_notify_info::get_action() const noexcept
 	{
 		return mAction;
@@ -20,5 +35,11 @@ namespace died
 	std::wstring file_notify_info::get_file_name() const
 	{
 		return mPath.filename().wstring();
+	}
+
+	size_t file_notify_info::alive() const
+	{
+		std::chrono::duration<double, std::milli> diff = std::chrono::steady_clock::now() - mCreatedTime;
+		return static_cast<size_t>(diff.count());
 	}
 }

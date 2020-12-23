@@ -192,6 +192,7 @@
     <ClInclude Include="FileWatcherDemo.h" />
     <ClInclude Include="FileWatcherDemoDlg.h" />
     <ClInclude Include="file_activity\attribute_watcher.h" />
+    <ClInclude Include="file_activity\circle_map.h" />
     <ClInclude Include="file_activity\common_utils.h" />
     <ClInclude Include="file_activity\directory_watcher_base.h" />
     <ClInclude Include="file_activity\directory_watcher_mgr.h" />

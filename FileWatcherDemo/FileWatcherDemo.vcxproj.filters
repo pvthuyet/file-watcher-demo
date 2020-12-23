@@ -31,6 +31,9 @@
     <Filter Include="File Activity\fxstd">
       <UniqueIdentifier>{97034cc5-d58a-462f-8795-f2cc4a1200df}</UniqueIdentifier>
     </Filter>
+    <Filter Include="File Activity\utils">
+      <UniqueIdentifier>{e92e954e-a626-4901-92bb-6108a81a2301}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -50,9 +53,6 @@
     </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="file_activity\std_filesystem.h">
-      <Filter>File Activity</Filter>
     </ClInclude>
     <ClInclude Include="file_activity\file_notify_info.h">
       <Filter>File Activity</Filter>
@@ -84,9 +84,6 @@
     <ClInclude Include="file_activity\file_name_watcher.h">
       <Filter>File Activity\watcher</Filter>
     </ClInclude>
-    <ClInclude Include="file_activity\common_utils.h">
-      <Filter>File Activity</Filter>
-    </ClInclude>
     <ClInclude Include="file_activity\attribute_watcher.h">
       <Filter>File Activity\watcher</Filter>
     </ClInclude>
@@ -101,6 +98,15 @@
     </ClInclude>
     <ClInclude Include="file_activity\fxstd\inc\string_helper.h">
       <Filter>File Activity\fxstd</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\common_utils.h">
+      <Filter>File Activity\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\std_filesystem.h">
+      <Filter>File Activity\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\circle_map.h">
+      <Filter>File Activity\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -131,9 +137,6 @@
     <ClCompile Include="file_activity\file_name_watcher.cpp">
       <Filter>File Activity\watcher</Filter>
     </ClCompile>
-    <ClCompile Include="file_activity\common_utils.cpp">
-      <Filter>File Activity</Filter>
-    </ClCompile>
     <ClCompile Include="file_activity\watching_setting.cpp">
       <Filter>File Activity\request</Filter>
     </ClCompile>
@@ -151,6 +154,9 @@
     </ClCompile>
     <ClCompile Include="file_activity\fxstd\src\string_helper.cpp">
       <Filter>File Activity\fxstd</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\common_utils.cpp">
+      <Filter>File Activity\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
