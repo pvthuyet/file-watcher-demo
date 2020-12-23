@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="File Activity">
+      <UniqueIdentifier>{e04563c8-be67-42d4-b8c3-da3adbe3e755}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File Activity\request">
+      <UniqueIdentifier>{4e19d35d-1e14-477e-ab9c-fc14cf5ed1ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File Activity\observer">
+      <UniqueIdentifier>{07683f2d-cc84-4c08-8667-cabba311ae6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File Activity\watcher">
+      <UniqueIdentifier>{ed6658c3-8a97-4a59-bb53-99870013ffc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File Activity\filter">
+      <UniqueIdentifier>{700a298e-dab9-43f2-ac6f-041eb8470aa1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File Activity\fxstd">
+      <UniqueIdentifier>{97034cc5-d58a-462f-8795-f2cc4a1200df}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FileWatcherDemo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileWatcherDemoDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\std_filesystem.h">
+      <Filter>File Activity</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\file_notify_info.h">
+      <Filter>File Activity</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\directory_watcher_mgr.h">
+      <Filter>File Activity</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\irequest.h">
+      <Filter>File Activity\request</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\iobserver.h">
+      <Filter>File Activity\observer</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\idirectory_watcher.h">
+      <Filter>File Activity\watcher</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\request_impl.h">
+      <Filter>File Activity\request</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\watching_setting.h">
+      <Filter>File Activity\request</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\observer_impl.h">
+      <Filter>File Activity\observer</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\directory_watcher_base.h">
+      <Filter>File Activity\watcher</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\file_name_watcher.h">
+      <Filter>File Activity\watcher</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\common_utils.h">
+      <Filter>File Activity</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\attribute_watcher.h">
+      <Filter>File Activity\watcher</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\folder_name_watcher.h">
+      <Filter>File Activity\watcher</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\security_watcher.h">
+      <Filter>File Activity\watcher</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\unnecessary_directory.h">
+      <Filter>File Activity\filter</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\fxstd\inc\string_helper.h">
+      <Filter>File Activity\fxstd</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FileWatcherDemo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileWatcherDemoDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\file_notify_info.cpp">
+      <Filter>File Activity</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\directory_watcher_mgr.cpp">
+      <Filter>File Activity</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\request_impl.cpp">
+      <Filter>File Activity\request</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\observer_impl.cpp">
+      <Filter>File Activity\observer</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\directory_watcher_base.cpp">
+      <Filter>File Activity\watcher</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\file_name_watcher.cpp">
+      <Filter>File Activity\watcher</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\common_utils.cpp">
+      <Filter>File Activity</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\watching_setting.cpp">
+      <Filter>File Activity\request</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\attribute_watcher.cpp">
+      <Filter>File Activity\watcher</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\folder_name_watcher.cpp">
+      <Filter>File Activity\watcher</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\security_watcher.cpp">
+      <Filter>File Activity\watcher</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\unnecessary_directory.cpp">
+      <Filter>File Activity\filter</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\fxstd\src\string_helper.cpp">
+      <Filter>File Activity\fxstd</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FileWatcherDemo.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\FileWatcherDemo.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\FileWatcherDemo.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

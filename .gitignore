@@ -34,3 +34,7 @@
 fxstd
 spdlog_________
 gsl_____
+*.suo
+*.opendb
+*.db
+Debug
