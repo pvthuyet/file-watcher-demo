@@ -14,13 +14,18 @@ namespace died
 		unsigned int N = std::numeric_limits<unsigned int>::max() - 1>
 	class circle_map final
 	{
-		static constexpr unsigned int INVALID_POS = N + 1;
 	public:
 		using key_type = KEY;
 		using mapped_type = T;
 		using size_type = unsigned int;
 		using con_vec = Concurrency::concurrent_vector<mapped_type>;
 		using con_map = Concurrency::concurrent_unordered_map<key_type, size_type>;
+		using reference = mapped_type&;
+		using const_reference = const mapped_type&;
+
+	private:
+		static constexpr unsigned int	INVALID_POS = N + 1;
+		static mapped_type				EMPTY_MAPPED_TYPE{};
 
 	public:
 		circle_map() noexcept(std::is_nothrow_constructible_v<con_vec> && std::is_nothrow_constructible_v<con_map>) = default;
@@ -28,7 +33,8 @@ namespace died
 
 		// copyable
 		circle_map(circle_map const& other) :
-			mPosPush{ other.mPosPush.load(std::memory_order_relaxed) },
+			mPushIndex{ other.mPushIndex.load(std::memory_order_relaxed) },
+			mPopIndex{ other.mPopIndex.load(std::memory_order_relaxed) },
 			mData{ other.mData },
 			mKeys{ other.mKeys }
 		{}
@@ -42,20 +48,24 @@ namespace died
 
 		// movable
 		circle_map(circle_map&& other) noexcept:
-			mPosPush{ other.mPosPush.load(std::memory_order_relaxed) },
+			mPushIndex{ other.mPushIndex.load(std::memory_order_relaxed) },
+			mPopIndex{ other.mPopIndex.load(std::memory_order_relaxed) },
 			mData{ std::exchange(other.mData,  con_vec{}) },
 			mKeys{ std::exchange(other.mKeys, con_map{}) }
 		{
-			other.mPosPush.store(0, std::memory_order_relaxed);
+			other.mPushIndex.store(0, std::memory_order_relaxed);
+			other.mPopIndex.store(0, std::memory_order_relaxed);
 		}
 
 		circle_map& operator=(circle_map&& other) noexcept
 		{
 			if (this != &other) {
-				mPosPush.store(other.mPosPush.load(std::memory_order_relaxed));
+				mPushIndex.store(other.mPushIndex.load(std::memory_order_relaxed));
+				mPopIndex.store(other.mPopIndex.load(std::memory_order_relaxed));
 				mData = std::exchange(other.mData, con_vec{});
 				mKeys = std::exchange(other.mKeys, con_map{});
-				other.mPosPush.store(0, std::memory_order_relaxed);
+				other.mPushIndex.store(0, std::memory_order_relaxed);
+				other.mPopIndex.store(0, std::memory_order_relaxed);
 			}
 			return *this;
 		}
@@ -63,40 +73,40 @@ namespace died
 		constexpr size_type max_size() const noexcept { return N; }
 		constexpr size_type size() const noexcept { return mKeys.size(); }
 
-		mapped_type find(key_type const& key) const
+		const_reference find(key_type const& key) const
 		{
 			auto pos = find_internal(key);
+			return (INVALID_POS != pos) ? mData[pos] : EMPTY_MAPPED_TYPE;
+		}
+
+		template<class Predicate>
+		const_reference find_if(Predicate pre) const
+		{
+			bool found = false;
+			size_type pos = mPopIndex.load(std::memory_order_relaxed);
+			for (size_type i = 0; i < N; ++i) { // circle search
+				pos = (pos + i) % N;
+				const auto& item = mData[pos];
+				if (item && pre(item)) {
+					found = true;
+					break;
+				}
+			}
+
+			return found ? mData[pos] : EMPTY_MAPPED_TYPE;
+		}
+
+		reference operator[](key_type const& key)
+		{
+			size_type pos = find_internal(key);
 			if (INVALID_POS != pos) {
 				return mData[pos];
 			}
 
-			// return empty element
-			return mapped_type{};
-		}
-
-		template<class Predicate>
-		mapped_type find_if(Predicate pre) const
-		{
-			auto found = std::find_if(mData.cbegin(), mData.cend(), pre);
-			if (mData.cend() != found) {
-				return *found;
-			}
-
-			// return empty element
-			return mapped_type{};
-		}
-
-		mapped_type& operator[](key_type const& key)
-		{
-			size_type found = find_internal(key);
-			if (INVALID_POS != found) {
-				return mData[found];
-			}
-
 			// Not found => create new pair
-			size_type pos = next_push_pos();
-			mKeys[key] = pos;
-			return mData[pos];
+			size_type next = next_push_index();
+			mKeys[key] = next;
+			return mData[next];
 		}
 
 		void erase(key_type const& key)
@@ -113,11 +123,9 @@ namespace died
 			found->second = INVALID_POS;
 		}
 
-		mapped_type front() const
+		const_reference front() const
 		{
-			// get current pos_pop
-			auto pos = get_pop_pos();
-			return mData[pos];
+			return mData[get_pop_index()];
 		}
 
 		size_type next_available_item() noexcept
@@ -128,7 +136,7 @@ namespace died
 			}
 
 			bool found = false;
-			size_type old = mPosPop.load(std::memory_order_relaxed);
+			size_type old = mPopIndex.load(std::memory_order_relaxed);
 			size_type next = old;
 			for (size_type i = 0; i < N; ++i) { // Circle search
 				next = (next + 1) % N;
@@ -144,7 +152,7 @@ namespace died
 			}
 
 			// avaible item => update to atomic
-			while (!mPosPop.compare_exchange_weak(old, next, std::memory_order_release, std::memory_order_relaxed)) {}
+			while (!mPopIndex.compare_exchange_weak(old, next, std::memory_order_release, std::memory_order_relaxed)) {}
 			return next;
 		}
 
@@ -158,12 +166,12 @@ namespace died
 			return found->second;
 		}
 
-		size_type next_push_pos() noexcept { return mPosPush++ % N; }
-		size_type get_pop_pos() const noexcept { return mPosPop.load(std::memory_order_relaxed) % N; }
+		size_type next_push_index() noexcept { return mPushIndex++ % N; }
+		size_type get_pop_index() const noexcept { return mPopIndex.load(std::memory_order_relaxed) % N; }
 
 	private:
-		std::atomic<size_type> mPosPush{ 0ul };
-		std::atomic<size_type> mPosPop{ 0ul };
+		std::atomic<size_type> mPushIndex{ 0ul };
+		std::atomic<size_type> mPopIndex{ 0ul };
 		con_vec mData{ N };
 		con_map mKeys; // Doesn't have reserve()
 	};
