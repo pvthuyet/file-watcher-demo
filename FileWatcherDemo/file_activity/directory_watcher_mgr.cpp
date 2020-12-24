@@ -12,6 +12,7 @@ namespace died
 	{
 		mRule->setAppDataDir(true);
 		mRule->addUserDefinePath(L"C:\\Windows\\");
+		mRule->addUserDefinePath(L"C:\\ProgramData\\");
 	}
 
 	bool directory_watcher_mgr::start(unsigned long notifyChange, bool subtree)
@@ -81,41 +82,13 @@ namespace died
 	TimerStatus directory_watcher_mgr::onTimer()
 	{
 		for (auto& el : mWatchers) {
-			notify_rename(el);
 			notify_attribute(el);
 			notify_security(el);
 			notify_folder_name(el);
+			notify_rename(el);
+			notify_create(el);
 		}
 		return TimerStatus::TIMER_CONTINUE;
-	}
-
-	void directory_watcher_mgr::notify_rename(watching_group& group) const
-	{
-		auto& model = group.mFileName.get_rename();
-		auto const& info = model.front();
-
-		//1. Invlid item => should jump to next one for next step
-		if (!info) {
-			model.next_available_item();
-			return;
-		}
-
-		// 2. Valid item but need delay
-		if (DELAY_PROCESS > info.mNewName.alive()) {
-			return;
-		}
-
-		//++ TODO filter
-		//...
-
-		// 4. notify this item
-		SPDLOG_INFO(L"{} - {}", info.mOldName.get_path_wstring(), info.mNewName.get_path_wstring());
-
-		// 5. erase processed item
-		model.erase(info.get_key());
-		
-		// 6. jump to next item for next step
-		model.next_available_item();
 	}
 
 	void directory_watcher_mgr::notify_attribute(watching_group& group) const
@@ -203,5 +176,100 @@ namespace died
 
 		// 6. jump to next item for next step
 		model.next_available_item();
+	}
+
+	void directory_watcher_mgr::notify_rename(watching_group& group) const
+	{
+		auto& model = group.mFileName.get_rename();
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.mNewName.alive()) {
+			return;
+		}
+
+		//++ TODO filter
+		//...
+
+		// 4. notify this item
+		SPDLOG_INFO(L"{} - {}", info.mOldName.get_path_wstring(), info.mNewName.get_path_wstring());
+
+		// 5. erase processed item
+		model.erase(info.get_key());
+
+		// 6. jump to next item for next step
+		model.next_available_item();
+	}
+
+	void directory_watcher_mgr::notify_create(watching_group& group) const
+	{
+		auto& addModel = group.mFileName.get_add();
+		auto& removeModel = group.mFileName.get_remove();
+		auto& modifyModel = group.mFileName.get_modify();
+
+		// pop item
+		auto const& info = addModel.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			addModel.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		// 3. file is processing => ignore this file, jump to next one
+		auto key = info.get_path_wstring();
+		if (died::fileIsProcessing(key)) {
+			addModel.next_available_item();
+		}
+
+		// case 1: save-as
+		auto const& rmv = removeModel.find(key);
+		auto const& modi = modifyModel.find(key);
+		if (rmv && modi) {
+			SPDLOG_INFO(L"Create: {}", key);
+			erase_all(group, key);
+			// jump to next item for next step
+			addModel.next_available_item();
+			return;
+		}
+
+		// case 2: exist in modifyModel => Should skip this item because of 'copy action'
+		if (modi) {
+			addModel.next_available_item();
+			return;
+		}
+
+		// case 2.1: exist 'file name' in removeModel => Should skip this item because of 'move action'
+		auto const& rmv2 = removeModel.find_if([filename = info.get_file_name_wstring()](auto const& el) {
+			return filename == el.get_file_name_wstring();
+		});
+		if (rmv2) {
+			addModel.next_available_item();
+			return;
+		}
+
+		// case 2.2 got data: only exist in addModel
+		SPDLOG_INFO(L"Create: {}", key);
+		erase_all(group, key);
+		// jump to next item for next step
+		addModel.next_available_item();
+	}
+
+	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key) const
+	{
+		group.mFileName.erase_all(key);
+		group.mAttr.get_model().erase(key);
+		group.mSecu.get_model().erase(key);
 	}
 }

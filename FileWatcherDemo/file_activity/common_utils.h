@@ -6,4 +6,5 @@
 namespace died
 {
 	std::vector<std::wstring> enumerate_drives();
+	bool fileIsProcessing(const std::wstring& filePath);
 }

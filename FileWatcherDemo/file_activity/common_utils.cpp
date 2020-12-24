@@ -39,4 +39,24 @@ namespace died
 
 		return drives;
 	}
+
+	bool fileIsProcessing(const std::wstring& filePath)
+	{
+		//++ TODO use scoped handle
+		HANDLE hFile = ::CreateFileW(filePath.c_str(),
+			GENERIC_READ,
+			FILE_SHARE_READ,
+			NULL,
+			OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL,
+			(HANDLE)NULL);
+
+		auto error = ::GetLastError();
+		if (INVALID_HANDLE_VALUE == hFile) {
+			return ERROR_SHARING_VIOLATION == error;
+		}
+
+		::CloseHandle(hFile);
+		return false;
+	}
 }

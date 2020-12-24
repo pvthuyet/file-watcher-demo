@@ -20,6 +20,7 @@ namespace died
 		std::wstring get_path_wstring() const;
 		std::wstring get_file_name_wstring() const;
 		std::wstring get_parent_path_wstring() const;
+		bool is_directory() const;
 
 		size_t alive() const; // in milli-seconds
 

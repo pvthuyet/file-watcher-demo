@@ -37,6 +37,11 @@ namespace died
 		return mPath.parent_path().wstring();
 	}
 
+	bool file_notify_info::is_directory() const
+	{
+		return std::filesystem::is_directory(mPath);
+	}
+
 	size_t file_notify_info::alive() const
 	{
 		std::chrono::duration<double, std::milli> diff = std::chrono::steady_clock::now() - mCreatedTime;

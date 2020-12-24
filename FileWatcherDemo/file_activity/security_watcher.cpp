@@ -8,12 +8,12 @@ namespace died
 		switch (info.get_action())
 		{
 		case FILE_ACTION_MODIFIED:
-			SPDLOG_INFO(L"{} - {}", info.get_action(), info.get_path_wstring());
+			SPDLOG_DEBUG(L"{} - {}", info.get_action(), info.get_path_wstring());
 			mModel.push(std::move(info));
 			break;
 
 		default:
-			SPDLOG_INFO(L"Ignore: {} - {}", info.get_action(), info.get_path_wstring());
+			SPDLOG_DEBUG(L"Ignore: {} - {}", info.get_action(), info.get_path_wstring());
 			break;
 		}
 	}
