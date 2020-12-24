@@ -62,6 +62,7 @@ namespace died
 			el.mFolderName.start();
 		}
 
+		// start timer thread
 		startTimer();
 		return true;
 	}
@@ -82,6 +83,8 @@ namespace died
 		for (auto& el : mWatchers) {
 			notify_rename(el);
 			notify_attribute(el);
+			notify_security(el);
+			notify_folder_name(el);
 		}
 		return TimerStatus::TIMER_CONTINUE;
 	}
@@ -102,13 +105,16 @@ namespace died
 			return;
 		}
 
-		// 3. notify this item
+		//++ TODO filter
+		//...
+
+		// 4. notify this item
 		SPDLOG_INFO(L"{} - {}", info.mOldName.get_path_wstring(), info.mNewName.get_path_wstring());
 
-		// 4. erase processed item
+		// 5. erase processed item
 		model.erase(info.get_key());
 		
-		// 5. jump to next item for next step
+		// 6. jump to next item for next step
 		model.next_available_item();
 	}
 
@@ -128,13 +134,74 @@ namespace died
 			return;
 		}
 
-		// 3. notify this item
+		//++ TODO filter
+		//...
+
+		// 4. notify this item
 		SPDLOG_INFO(L"{}", info.get_path_wstring());
 
-		// 4. erase processed item
+		// 5. erase processed item
 		model.erase(info.get_path_wstring());
 
-		// 5. jump to next item for next step
+		// 6. jump to next item for next step
+		model.next_available_item();
+	}
+
+	void directory_watcher_mgr::notify_security(watching_group& group) const
+	{
+		auto& model = group.mSecu.get_model();
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		//++ TODO filter
+		//...
+
+		// 4. notify this item
+		SPDLOG_INFO(L"{}", info.get_path_wstring());
+
+		// 5. erase processed item
+		model.erase(info.get_path_wstring());
+
+		// 6. jump to next item for next step
+		model.next_available_item();
+	}
+
+	void directory_watcher_mgr::notify_folder_name(watching_group& group) const
+	{
+		auto& model = group.mFolderName.get_model();
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		//++ TODO filter
+		//...
+
+		// 4. notify this item
+		SPDLOG_INFO(L"{}", info.get_path_wstring());
+
+		// 5. erase processed item
+		model.erase(info.get_path_wstring());
+
+		// 6. jump to next item for next step
 		model.next_available_item();
 	}
 }

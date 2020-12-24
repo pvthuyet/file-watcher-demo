@@ -27,6 +27,8 @@ namespace died
 		TimerStatus onTimer() final;
 		void notify_rename(watching_group& group) const;
 		void notify_attribute(watching_group& group) const;
+		void notify_security(watching_group& group) const;
+		void notify_folder_name(watching_group& group) const;
 
 	private:
 		std::vector<watching_group> mWatchers;
