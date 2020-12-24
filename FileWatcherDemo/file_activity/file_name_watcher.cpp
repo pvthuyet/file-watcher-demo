@@ -3,17 +3,8 @@
 
 namespace died
 {
-	file_name_watcher::file_name_watcher()
-	{
-		mRules.setAppDataDir(true);
-	}
-
 	void file_name_watcher::do_notify(file_notify_info info)
 	{
-		if (mRules.contains(info)) {
-			return;
-		}
-
 		switch (info.get_action())
 		{
 		case FILE_ACTION_ADDED:
@@ -36,7 +27,7 @@ namespace died
 		}
 	}
 
-	rename_model& file_name_watcher::get_rename()
+	model_rename& file_name_watcher::get_rename()
 	{
 		return mRename;
 	}

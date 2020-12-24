@@ -5,9 +5,14 @@
 
 namespace died
 {
+	constexpr size_t DELAY_PROCESS = 1500; // milli-second
 	directory_watcher_mgr::directory_watcher_mgr(unsigned long interval) :
-		TaskTimer(interval)
-	{}
+		TaskTimer(interval),
+		mRule{ std::make_shared<fat::UnnecessaryDirectory>() }
+	{
+		mRule->setAppDataDir(true);
+		mRule->addUserDefinePath(L"C:\\Windows\\");
+	}
 
 	bool directory_watcher_mgr::start(unsigned long notifyChange, bool subtree)
 	{
@@ -29,18 +34,22 @@ namespace died
 			// 1. watching file name
 			watching_setting setFileName(actionFileName, el, subtree);
 			group.mFileName.add_setting(std::move(setFileName));
+			group.mFileName.set_rule(mRule);
 
 			// 2. watching attribute
 			watching_setting setAttr(actionAttr, el, subtree);
 			group.mAttr.add_setting(std::move(setAttr));
+			group.mAttr.set_rule(mRule);
 
 			// 3. watching security
 			watching_setting setSecu(actionSecu, el, subtree);
 			group.mSecu.add_setting(std::move(setSecu));
+			group.mSecu.set_rule(mRule);
 
 			// 4. watching folder name
 			watching_setting setFolderName(actionFolderName, el, subtree);
 			group.mFolderName.add_setting(std::move(setFolderName));
+			group.mFolderName.set_rule(mRule);
 
 			mWatchers.push_back(std::move(group));
 		}
@@ -72,13 +81,13 @@ namespace died
 	{
 		for (auto& el : mWatchers) {
 			notify_rename(el);
+			notify_attribute(el);
 		}
 		return TimerStatus::TIMER_CONTINUE;
 	}
 
 	void directory_watcher_mgr::notify_rename(watching_group& group) const
 	{
-		constexpr size_t DELAY_PROCESS = 1500; // milli-second
 		auto& model = group.mFileName.get_rename();
 		auto const& info = model.front();
 
@@ -99,6 +108,32 @@ namespace died
 		// 4. erase processed item
 		model.erase(info.get_key());
 		
+		// 5. jump to next item for next step
+		model.next_available_item();
+	}
+
+	void directory_watcher_mgr::notify_attribute(watching_group& group) const
+	{
+		auto& model = group.mAttr.get_model();
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		// 3. notify this item
+		SPDLOG_INFO(L"{}", info.get_path_wstring());
+
+		// 4. erase processed item
+		model.erase(info.get_path_wstring());
+
 		// 5. jump to next item for next step
 		model.next_available_item();
 	}

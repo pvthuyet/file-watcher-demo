@@ -13,11 +13,17 @@ namespace died
 		stop();
 	}
 
+	void directory_watcher_base::set_rule(std::shared_ptr<fat::UnnecessaryDirectory> rule)
+	{
+		mRule = rule;
+	}
+
 	directory_watcher_base::directory_watcher_base(directory_watcher_base&& other) noexcept :
 		mSettings{ std::exchange(other.mSettings, std::vector<watching_setting>{}) },
 		mObserverThread{ std::exchange(other.mObserverThread, nullptr) },
 		mThreadId{ std::exchange(other.mThreadId, 0) },
-		mObserver{ std::exchange(other.mObserver, nullptr) }
+		mObserver{ std::exchange(other.mObserver, nullptr) },
+		mRule{ std::exchange(other.mRule, nullptr) }
 	{}
 
 	directory_watcher_base& directory_watcher_base::operator=(directory_watcher_base&& other) noexcept
@@ -27,6 +33,7 @@ namespace died
 			mObserverThread = std::exchange(other.mObserverThread, nullptr);
 			mThreadId = std::exchange(other.mThreadId, 0);
 			mObserver = std::exchange(other.mObserver, nullptr);
+			mRule = std::exchange(other.mRule, nullptr);
 		}
 		return *this;
 	}
@@ -131,5 +138,13 @@ namespace died
 		// 3. destroy observer
 		mObserver = nullptr;
 		LOGEXIT;
+	}
+
+	void directory_watcher_base::filter_notify(file_notify_info info)
+	{
+		Ensures(mRule);
+		if (!mRule->contains(info)) {
+			do_notify(std::move(info));
+		}
 	}
 }

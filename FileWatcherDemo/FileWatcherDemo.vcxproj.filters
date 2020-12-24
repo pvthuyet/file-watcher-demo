@@ -111,11 +111,14 @@
     <ClInclude Include="file_activity\circle_map.h">
       <Filter>File Activity\utils</Filter>
     </ClInclude>
-    <ClInclude Include="file_activity\rename_model.h">
-      <Filter>File Activity\model</Filter>
-    </ClInclude>
     <ClInclude Include="file_activity\fxstd\inc\task_timer.h">
       <Filter>File Activity\fxstd</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\model_rename.h">
+      <Filter>File Activity\model</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\model_file_info.h">
+      <Filter>File Activity\model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -167,11 +170,14 @@
     <ClCompile Include="file_activity\common_utils.cpp">
       <Filter>File Activity\utils</Filter>
     </ClCompile>
-    <ClCompile Include="file_activity\rename_model.cpp">
-      <Filter>File Activity\model</Filter>
-    </ClCompile>
     <ClCompile Include="file_activity\fxstd\src\task_timer.cpp">
       <Filter>File Activity\fxstd</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\model_rename.cpp">
+      <Filter>File Activity\model</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\model_file_info.cpp">
+      <Filter>File Activity\model</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

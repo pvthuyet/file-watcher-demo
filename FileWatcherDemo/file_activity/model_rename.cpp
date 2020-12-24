@@ -1,4 +1,4 @@
-#include "rename_model.h"
+#include "model_rename.h"
 #include <Windows.h>
 
 namespace died
@@ -22,7 +22,7 @@ namespace died
 
 	/************************************************************************************************/
 
-	void rename_model::push(file_notify_info&& info)
+	void model_rename::push(file_notify_info&& info)
 	{
 		switch (info.get_action())
 		{
@@ -45,23 +45,23 @@ namespace died
 		}
 	}
 
-	const rename_notify_info& rename_model::front() const
+	const rename_notify_info& model_rename::front() const
 	{
 		return mData.front();
 	}
 
-	const file_notify_info& rename_model::find(std::wstring const& key) const
+	const file_notify_info& model_rename::find(std::wstring const& key) const
 	{
 		auto const& found = mData.find(key);
 		return found.mNewName;
 	}
 
-	void rename_model::erase(std::wstring const& key)
+	void model_rename::erase(std::wstring const& key)
 	{
 		mData.erase(key);
 	}
 
-	unsigned int rename_model::next_available_item()
+	unsigned int model_rename::next_available_item()
 	{
 		return mData.next_available_item();
 	}

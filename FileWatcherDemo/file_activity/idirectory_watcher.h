@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file_notify_info.h"
+#include <memory>
 
 namespace died
 {
@@ -8,12 +9,13 @@ namespace died
 	{
 	public:
 		virtual ~idirectory_watcher() noexcept = default;
+
 		void notify(file_notify_info&& info)
 		{
-			do_notify(std::move(info));
+			filter_notify(std::move(info));
 		}
 
 	private:
-		virtual void do_notify(file_notify_info info) = 0;
+		virtual void filter_notify(file_notify_info info) = 0;
 	};
 }
