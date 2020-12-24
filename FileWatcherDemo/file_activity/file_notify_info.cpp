@@ -12,11 +12,6 @@ namespace died
 		return mAction > 0 && !mPath.empty();
 	}
 
-	std::wstring file_notify_info::get_key() const
-	{
-		return std::to_wstring(mAction) + get_path_wstring();
-	}
-
 	unsigned long file_notify_info::get_action() const noexcept
 	{
 		return mAction;

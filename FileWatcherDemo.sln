@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileWatcherDemo", "FileWatcherDemo\FileWatcherDemo.vcxproj", "{A4A04C8A-8934-408A-A2FD-D53AA37056D9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_file_watcher", "test_file_watcher\test_file_watcher.vcxproj", "{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{A4A04C8A-8934-408A-A2FD-D53AA37056D9}.Release|x64.Build.0 = Release|x64
 		{A4A04C8A-8934-408A-A2FD-D53AA37056D9}.Release|x86.ActiveCfg = Release|Win32
 		{A4A04C8A-8934-408A-A2FD-D53AA37056D9}.Release|x86.Build.0 = Release|Win32
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Debug|x64.ActiveCfg = Debug|x64
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Debug|x64.Build.0 = Debug|x64
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Debug|x86.ActiveCfg = Debug|Win32
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Debug|x86.Build.0 = Debug|Win32
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Release|x64.ActiveCfg = Release|x64
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Release|x64.Build.0 = Release|x64
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Release|x86.ActiveCfg = Release|Win32
+		{342F1CA1-30BA-4AD5-8982-88B0FEC91B3C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -38,3 +38,4 @@ gsl_____
 *.opendb
 *.db
 Debug
+*.ipch

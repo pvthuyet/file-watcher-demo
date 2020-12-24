@@ -24,8 +24,8 @@ namespace died
 		using const_reference = const mapped_type&;
 
 	private:
-		static constexpr unsigned int	INVALID_POS = N + 1;
-		static mapped_type				EMPTY_MAPPED_TYPE{};
+		const unsigned int		INVALID_POS = N + 1;
+		const mapped_type		EMPTY_MAPPED_TYPE{};
 
 	public:
 		circle_map() noexcept(std::is_nothrow_constructible_v<con_vec> && std::is_nothrow_constructible_v<con_map>) = default;
@@ -170,8 +170,8 @@ namespace died
 		size_type get_pop_index() const noexcept { return mPopIndex.load(std::memory_order_relaxed) % N; }
 
 	private:
-		std::atomic<size_type> mPushIndex{ 0ul };
-		std::atomic<size_type> mPopIndex{ 0ul };
+		std::atomic<size_type> mPushIndex{ 0u };
+		std::atomic<size_type> mPopIndex{ 0u };
 		con_vec mData{ N };
 		con_map mKeys; // Doesn't have reserve()
 	};

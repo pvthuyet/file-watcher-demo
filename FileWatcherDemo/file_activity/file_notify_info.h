@@ -15,7 +15,6 @@ namespace died
 
 		explicit operator bool() const noexcept;
 
-		std::wstring get_key() const;
 		unsigned long get_action() const noexcept;
 		unsigned long get_size() const noexcept;
 		std::wstring get_path_wstring() const;
