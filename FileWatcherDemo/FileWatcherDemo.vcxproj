@@ -200,10 +200,12 @@
     <ClInclude Include="file_activity\file_notify_info.h" />
     <ClInclude Include="file_activity\folder_name_watcher.h" />
     <ClInclude Include="file_activity\fxstd\inc\string_helper.h" />
+    <ClInclude Include="file_activity\fxstd\inc\task_timer.h" />
     <ClInclude Include="file_activity\idirectory_watcher.h" />
     <ClInclude Include="file_activity\iobserver.h" />
     <ClInclude Include="file_activity\irequest.h" />
     <ClInclude Include="file_activity\observer_impl.h" />
+    <ClInclude Include="file_activity\rename_model.h" />
     <ClInclude Include="file_activity\request_impl.h" />
     <ClInclude Include="file_activity\security_watcher.h" />
     <ClInclude Include="file_activity\std_filesystem.h" />
@@ -224,7 +226,9 @@
     <ClCompile Include="file_activity\file_notify_info.cpp" />
     <ClCompile Include="file_activity\folder_name_watcher.cpp" />
     <ClCompile Include="file_activity\fxstd\src\string_helper.cpp" />
+    <ClCompile Include="file_activity\fxstd\src\task_timer.cpp" />
     <ClCompile Include="file_activity\observer_impl.cpp" />
+    <ClCompile Include="file_activity\rename_model.cpp" />
     <ClCompile Include="file_activity\request_impl.cpp" />
     <ClCompile Include="file_activity\security_watcher.cpp" />
     <ClCompile Include="file_activity\unnecessary_directory.cpp" />

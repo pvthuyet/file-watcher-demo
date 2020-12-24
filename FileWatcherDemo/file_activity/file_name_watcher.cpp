@@ -14,7 +14,6 @@ namespace died
 			return;
 		}
 
-		//SPDLOG_INFO(L"{} - {}", info.get_action(), info.get_path_wstring());
 		switch (info.get_action())
 		{
 		case FILE_ACTION_ADDED:
@@ -27,15 +26,18 @@ namespace died
 			break;
 
 		case FILE_ACTION_RENAMED_OLD_NAME:
-			SPDLOG_INFO(L"{} - {}", L"FILE_ACTION_RENAMED_OLD_NAME", info.get_path_wstring());
-			break;
-
 		case FILE_ACTION_RENAMED_NEW_NAME:
-			SPDLOG_INFO(L"{} - {}", L"FILE_ACTION_RENAMED_NEW_NAME", info.get_path_wstring());
+			SPDLOG_INFO(L"{} - {}", info.get_action(), info.get_path_wstring());
+			mRename.push(std::move(info));
 			break;
 
 		default:
 			break;
 		}
+	}
+
+	rename_model& file_name_watcher::get_rename()
+	{
+		return mRename;
 	}
 }

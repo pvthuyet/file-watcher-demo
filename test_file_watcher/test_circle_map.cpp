@@ -14,6 +14,16 @@ using test_map_t = died::circle_map<test_key_t, test_item_t, MAX_SIZE_MAP>;
 
 const test_item_t EMPTY_ITEM;
 
+test_map_t initialize(int size)
+{
+	test_map_t mp;
+	for (int i = 0; i < size; ++i) {
+		test_item_t v(L"key-" + std::to_wstring(i + 1), i + 1);
+		mp[v.get_path_wstring()] = v;
+	}
+	return mp;
+}
+
 namespace test_file_watcher
 {		
 	TEST_CLASS(test_circle_map)
@@ -74,6 +84,13 @@ namespace test_file_watcher
 			test_map_t mp;
 			auto v = mp.next_available_item();
 			Assert::IsTrue(v > mp.max_size());
+		}
+
+		TEST_METHOD(add_items_bigger_max_size_map)
+		{
+			int size = MAX_SIZE_MAP + 1;
+			auto mp = initialize(size);
+			Assert::IsTrue(MAX_SIZE_MAP == mp.size());
 		}
 	};
 }

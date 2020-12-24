@@ -34,6 +34,9 @@
     <Filter Include="File Activity\utils">
       <UniqueIdentifier>{e92e954e-a626-4901-92bb-6108a81a2301}</UniqueIdentifier>
     </Filter>
+    <Filter Include="File Activity\model">
+      <UniqueIdentifier>{9b021971-17cd-4846-9b1f-ebafd7f510ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -108,6 +111,12 @@
     <ClInclude Include="file_activity\circle_map.h">
       <Filter>File Activity\utils</Filter>
     </ClInclude>
+    <ClInclude Include="file_activity\rename_model.h">
+      <Filter>File Activity\model</Filter>
+    </ClInclude>
+    <ClInclude Include="file_activity\fxstd\inc\task_timer.h">
+      <Filter>File Activity\fxstd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileWatcherDemo.cpp">
@@ -157,6 +166,12 @@
     </ClCompile>
     <ClCompile Include="file_activity\common_utils.cpp">
       <Filter>File Activity\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\rename_model.cpp">
+      <Filter>File Activity\model</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\fxstd\src\task_timer.cpp">
+      <Filter>File Activity\fxstd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

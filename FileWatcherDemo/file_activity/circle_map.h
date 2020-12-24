@@ -71,7 +71,7 @@ namespace died
 		}
 
 		constexpr size_type max_size() const noexcept { return N; }
-		constexpr size_type size() const noexcept { return mKeys.size(); }
+		constexpr size_type size() const noexcept { return mData.size(); }
 
 		const_reference find(key_type const& key) const
 		{
@@ -109,6 +109,19 @@ namespace died
 			return mData[next];
 		}
 
+		reference operator[](key_type&& key)
+		{
+			size_type pos = find_internal(key);
+			if (INVALID_POS != pos) {
+				return mData[pos];
+			}
+
+			// Not found => create new pair
+			size_type next = next_push_index();
+			mKeys[std::move(key)] = next;
+			return mData[next];
+		}
+
 		void erase(key_type const& key)
 		{
 			auto found = mKeys.find(key);
@@ -128,7 +141,7 @@ namespace died
 			return mData[get_pop_index()];
 		}
 
-		size_type next_available_item() noexcept
+		size_type next_available_item()
 		{
 			// Empty data
 			if (mKeys.size() == 0) {

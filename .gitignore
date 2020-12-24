@@ -39,3 +39,4 @@ gsl_____
 *.db
 Debug
 *.ipch
+logger.log

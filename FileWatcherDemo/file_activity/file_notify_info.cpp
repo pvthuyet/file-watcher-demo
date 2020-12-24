@@ -27,9 +27,14 @@ namespace died
 		return mPath.wstring();
 	}
 
-	std::wstring file_notify_info::get_file_name() const
+	std::wstring file_notify_info::get_file_name_wstring() const
 	{
 		return mPath.filename().wstring();
+	}
+
+	std::wstring file_notify_info::get_parent_path_wstring() const
+	{
+		return mPath.parent_path().wstring();
 	}
 
 	size_t file_notify_info::alive() const

@@ -18,7 +18,8 @@ namespace died
 		unsigned long get_action() const noexcept;
 		unsigned long get_size() const noexcept;
 		std::wstring get_path_wstring() const;
-		std::wstring get_file_name() const;
+		std::wstring get_file_name_wstring() const;
+		std::wstring get_parent_path_wstring() const;
 
 		size_t alive() const; // in milli-seconds
 
