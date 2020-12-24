@@ -268,7 +268,9 @@ namespace died
 
 	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key) const
 	{
-		group.mFileName.erase_all(key);
+		group.mFileName.get_add().erase(key);
+		group.mFileName.get_remove().erase(key);
+		group.mFileName.get_modify().erase(key);
 		group.mAttr.get_model().erase(key);
 		group.mSecu.get_model().erase(key);
 	}

@@ -54,11 +54,4 @@ namespace died
 	{
 		return mModify;
 	}
-
-	void file_name_watcher::erase_all(std::wstring const& key)
-	{
-		mAdd.erase(key);
-		mRemove.erase(key);
-		mModify.erase(key);
-	}
 }

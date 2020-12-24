@@ -13,7 +13,6 @@ namespace died
 		model_file_info& get_remove();
 		model_file_info& get_modify();
 		model_rename& get_rename();
-		void erase_all(std::wstring const& key);
 
 	private:
 		void do_notify(file_notify_info info) final;
