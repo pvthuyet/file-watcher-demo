@@ -15,6 +15,9 @@ namespace died
 		unsigned int N = std::numeric_limits<unsigned int>::max() - 1>
 	class circle_map final
 	{
+		static_assert(N > 0, "Map size must be greater than 0");
+		static_assert(N < std::numeric_limits<unsigned int>::max(), "Map size must less than max unsigned int");
+
 	public:
 		using key_type = KEY;
 		using mapped_type = T;
@@ -67,8 +70,11 @@ namespace died
 			return *this;
 		}
 
-		constexpr size_type max_size() const noexcept { return N; }
-		size_type size() const noexcept { return mData.size(); }
+		constexpr size_type size() const noexcept 
+		{ 
+			return N; 
+		}
+
 		bool empty() const noexcept
 		{
 			Ensures(mPushIndex.load() >= mPopIndex.load());
@@ -168,7 +174,7 @@ namespace died
 
 			// No available data
 			if (!found) {
-				// Mark as empty map by rest 'pop index' = 'push index'
+				// Mark as empty map by reset 'pop index' = 'push index'
 				next = mPushIndex.load(std::memory_order_relaxed);
 			}
 
@@ -196,8 +202,15 @@ namespace died
 			return found->second;
 		}
 
-		size_type next_push_index() noexcept { return mPushIndex++ % N; }
-		size_type get_pop_index() const noexcept { return mPopIndex.load(std::memory_order_relaxed) % N; }
+		size_type next_push_index() noexcept 
+		{ 
+			return mPushIndex++ % N; 
+		}
+
+		size_type get_pop_index() const noexcept 
+		{ 
+			return mPopIndex.load(std::memory_order_relaxed) % N; 
+		}
 
 	private:
 		std::atomic<size_type> mPushIndex{ 0u };
