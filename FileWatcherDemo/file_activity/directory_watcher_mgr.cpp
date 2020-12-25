@@ -88,6 +88,7 @@ namespace died
 			notify_folder_name(el);
 			notify_rename(el);
 			notify_create(el);
+			notify_remove(el);
 		}
 		return TimerStatus::TIMER_CONTINUE;
 	}
@@ -228,10 +229,13 @@ namespace died
 			return;
 		}
 
-		// 3. file is processing => ignore this file, jump to next one
+		// get key
 		auto key = info.get_path_wstring();
+
+		// 3. file is processing => ignore this file, jump to next one
 		if (died::fileIsProcessing(key)) {
 			addModel.next_available_item();
+			return;
 		}
 
 		auto const& rmv = removeModel.find(key);
@@ -259,9 +263,62 @@ namespace died
 			return;
 		}
 
-		// **otherwise ignore this item
+		// **otherwise: ignore this item
 		// jump to next item for next step
 		addModel.next_available_item();
+	}
+
+	void directory_watcher_mgr::notify_remove(watching_group& group)
+	{
+		auto& model = group.mFileName.get_remove();
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		// get key
+		auto key = info.get_path_wstring();
+
+		// **Goal of remove : should not exist in any groups
+
+		// Case 1: check 'key' in current group
+		// this is happen when edit image file
+		// receive: delete, add, modify
+		auto addInfo = group.mFileName.get_add().find(key);
+		if (addInfo) {
+			model.next_available_item();
+			return;
+		}
+
+		// case 2: 'filename' should not exist in any 'add model' of other groups
+		// this happen when move file
+		// receive: add, delete (in the same disk)
+		// reveive: add, delete, modify (different disk)
+		std::wstring filename = info.get_file_name_wstring();
+		for (auto& w : mWatchers) {
+			auto found = w.mFileName.get_add().find_if([&filename](auto const& item) {
+				return filename == item.get_file_name_wstring();
+			});
+
+			// this is not remove action
+			if (found) {
+				model.next_available_item();
+				return;
+			}
+		}
+
+		// Otherwise this is remove action
+		SPDLOG_INFO(L"Remove: {}", key);
+		model.erase(key);
+		model.next_available_item();
 	}
 
 	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key) const

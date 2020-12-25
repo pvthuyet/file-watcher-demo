@@ -30,6 +30,7 @@ namespace died
 		void notify_folder_name(watching_group& group) const;
 		void notify_rename(watching_group& group) const;
 		void notify_create(watching_group& group) const;
+		void notify_remove(watching_group& group);
 		void erase_all(watching_group& group, std::wstring const& key) const;
 
 	private:
