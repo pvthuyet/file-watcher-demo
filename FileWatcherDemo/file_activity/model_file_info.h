@@ -7,7 +7,7 @@ namespace died
 {
 	class model_file_info
 	{
-		using file_info_map = died::circle_map<std::wstring, file_notify_info, 128u>;
+		using file_info_map = died::circle_map<std::wstring, file_notify_info, 32u>;
 	public:
 		void push(file_notify_info&& info);
 		const file_notify_info& front() const;

@@ -13,6 +13,7 @@ namespace died
 		mRule->setAppDataDir(true);
 		mRule->addUserDefinePath(L"C:\\Windows\\");
 		mRule->addUserDefinePath(L"C:\\ProgramData\\");
+		mRule->addUserDefinePath(L"C:\\project\\");
 	}
 
 	bool directory_watcher_mgr::start(unsigned long notifyChange, bool subtree)

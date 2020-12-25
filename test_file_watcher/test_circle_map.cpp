@@ -34,7 +34,6 @@ namespace test_file_watcher
 		TEST_METHOD(ctor_circle_map)
 		{
 			test_map_t mp;
-			Assert::AreEqual(mp.max_size(), MAX_SIZE_MAP);
 			Assert::AreEqual(mp.size(), 0u);
 		}
 
@@ -83,13 +82,14 @@ namespace test_file_watcher
 		{
 			test_map_t mp;
 			auto v = mp.next_available_item();
-			Assert::IsTrue(v > mp.max_size());
+			Assert::IsTrue(v == 0u);
 		}
 
 		TEST_METHOD(add_items_bigger_max_size_map)
 		{
 			int size = MAX_SIZE_MAP + 1;
 			auto mp = initialize(size);
+			auto sz = mp.size();
 			Assert::IsTrue(MAX_SIZE_MAP == mp.size());
 		}
 	};

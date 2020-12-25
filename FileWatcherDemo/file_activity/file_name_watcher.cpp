@@ -7,7 +7,7 @@ namespace died
 	{
 		SPDLOG_DEBUG(L"{} - {}", info.get_action(), info.get_path_wstring());
 		if (info.is_directory()) {
-			SPDLOG_DEBUG(L"Ignore => directory");
+			SPDLOG_DEBUG(L"Ignore directory");
 			return;
 		}
 
