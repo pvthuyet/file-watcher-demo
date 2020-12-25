@@ -5,18 +5,17 @@
 #include <atomic>
 #include <limits>
 #include <algorithm>
-#include "gsl\gsl_assert"
 
 namespace died
 {
 	template<
 		class KEY,
 		class T,
-		unsigned int N = std::numeric_limits<unsigned int>::max() - 1>
+		unsigned int N = UINT_MAX - 1>
 	class circle_map final
 	{
 		static_assert(N > 0, "Map size must be greater than 0");
-		static_assert(N < std::numeric_limits<unsigned int>::max(), "Map size must less than max unsigned int");
+		static_assert(N < UINT_MAX, "Map size must be less than UINT_MAX");
 
 	public:
 		using key_type = KEY;
@@ -33,6 +32,7 @@ namespace died
 
 		// copyable
 		circle_map(circle_map const& other) :
+			mEmpty{ other.mEmpty.load(std::memory_order_relaxed) },
 			mPushIndex{ other.mPushIndex.load(std::memory_order_relaxed) },
 			mPopIndex{ other.mPopIndex.load(std::memory_order_relaxed) },
 			mData{ other.mData },
@@ -48,11 +48,14 @@ namespace died
 
 		// movable
 		circle_map(circle_map&& other) noexcept:
+			mEmpty{ other.mEmpty.load(std::memory_order_relaxed) },
 			mPushIndex{ other.mPushIndex.load(std::memory_order_relaxed) },
 			mPopIndex{ other.mPopIndex.load(std::memory_order_relaxed) },
 			mData{ std::exchange(other.mData,  con_vec{}) },
 			mKeys{ std::exchange(other.mKeys, con_map{}) }
 		{
+			// reset other atomic
+			other.mEmpty.store(true, std::memory_order_relaxed);
 			other.mPushIndex.store(0, std::memory_order_relaxed);
 			other.mPopIndex.store(0, std::memory_order_relaxed);
 		}
@@ -60,10 +63,14 @@ namespace died
 		circle_map& operator=(circle_map&& other) noexcept
 		{
 			if (this != &other) {
+				mEmpty.store(other.mEmpty.load(std::memory_order_relaxed));
 				mPushIndex.store(other.mPushIndex.load(std::memory_order_relaxed));
 				mPopIndex.store(other.mPopIndex.load(std::memory_order_relaxed));
 				mData = std::exchange(other.mData, con_vec{});
 				mKeys = std::exchange(other.mKeys, con_map{});
+
+				// reset other atomic
+				other.mEmpty.store(true, std::memory_order_relaxed);
 				other.mPushIndex.store(0, std::memory_order_relaxed);
 				other.mPopIndex.store(0, std::memory_order_relaxed);
 			}
@@ -72,13 +79,12 @@ namespace died
 
 		constexpr size_type size() const noexcept 
 		{ 
-			return N; 
+			return N;
 		}
 
 		bool empty() const noexcept
 		{
-			Ensures(mPushIndex.load() >= mPopIndex.load());
-			return mPushIndex.load(std::memory_order_relaxed) == mPopIndex.load(std::memory_order_relaxed);
+			return mEmpty.load(std::memory_order_relaxed);
 		}
 
 		const_reference find(key_type const& key) const
@@ -112,6 +118,10 @@ namespace died
 
 		reference operator[](key_type const& key)
 		{
+			// This function is considered as add item to map
+			// Whenever it is called should change the empty state
+			updateEmpty(false);
+
 			size_type pos = find_internal(key);
 			if (INVALID_INDEX != pos) {
 				return mData[pos];
@@ -120,19 +130,6 @@ namespace died
 			// Not found => create new pair
 			size_type curIndex = next_push_index();
 			mKeys[key] = curIndex;
-			return mData[curIndex];
-		}
-
-		reference operator[](key_type&& key)
-		{
-			size_type pos = find_internal(key);
-			if (INVALID_INDEX != pos) {
-				return mData[pos];
-			}
-
-			// Not found => create new pair
-			size_type curIndex = next_push_index();
-			mKeys[std::move(key)] = curIndex;
 			return mData[curIndex];
 		}
 
@@ -166,24 +163,27 @@ namespace died
 			size_type old = mPopIndex.load(std::memory_order_relaxed);
 			size_type next = old;
 			for (size_type i = 0; i < N; ++i) { // Circle search
-				if (mData[++next % N]) {
+				next = (next + 1) % N;
+				if (mData[next]) {
 					found = true;
 					break;
 				}
 			}
 
-			// No available data
+			// No more data
 			if (!found) {
-				// Mark as empty map by reset 'pop index' = 'push index'
-				next = mPushIndex.load(std::memory_order_relaxed);
+				// Mark as empty map
+				updateEmpty(true);
 			}
 
-			// Always 'pop index' <= 'push index'
-			Ensures(next <= mPushIndex.load());
+			// The 'old' is already processed => should ignore it
+			if (found && next == old) {
+				next = (next + 1) % N;
+			}
 
 			// avaible item => update to atomic
 			while (!mPopIndex.compare_exchange_weak(old, next, std::memory_order_release, std::memory_order_relaxed)) {}
-			return next % N;
+			return next;
 		}
 
 	private:
@@ -212,7 +212,15 @@ namespace died
 			return mPopIndex.load(std::memory_order_relaxed) % N; 
 		}
 
+		bool updateEmpty(bool val)
+		{
+			bool old = mEmpty.load(std::memory_order_relaxed);
+			while (!mEmpty.compare_exchange_weak(old, val, std::memory_order_release, std::memory_order_relaxed)) {}
+			return old;
+		}
+
 	private:
+		std::atomic_bool mEmpty{ true };
 		std::atomic<size_type> mPushIndex{ 0u };
 		std::atomic<size_type> mPopIndex{ 0u };
 		con_vec mData{ N };
