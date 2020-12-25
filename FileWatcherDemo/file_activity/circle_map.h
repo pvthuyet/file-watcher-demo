@@ -5,6 +5,7 @@
 #include <atomic>
 #include <limits>
 #include <algorithm>
+#include "gsl\gsl_assert"
 
 namespace died
 {
@@ -22,10 +23,6 @@ namespace died
 		using con_map = Concurrency::concurrent_unordered_map<key_type, size_type>;
 		using reference = mapped_type&;
 		using const_reference = const mapped_type&;
-
-	private:
-		const unsigned int		INVALID_POS = N + 1;
-		const mapped_type		EMPTY_MAPPED_TYPE{};
 
 	public:
 		circle_map() noexcept(std::is_nothrow_constructible_v<con_vec> && std::is_nothrow_constructible_v<con_map>) = default;
@@ -71,17 +68,28 @@ namespace died
 		}
 
 		constexpr size_type max_size() const noexcept { return N; }
-		constexpr size_type size() const noexcept { return mData.size(); }
+		size_type size() const noexcept { return mData.size(); }
+		bool empty() const noexcept
+		{
+			Ensures(mPushIndex.load() >= mPopIndex.load());
+			return mPushIndex.load(std::memory_order_relaxed) == mPopIndex.load(std::memory_order_relaxed);
+		}
 
 		const_reference find(key_type const& key) const
 		{
 			auto pos = find_internal(key);
-			return (INVALID_POS != pos) ? mData[pos] : EMPTY_MAPPED_TYPE;
+			return (INVALID_INDEX != pos) ? mData[pos] : EMPTY_ITEM;
 		}
 
 		template<class Predicate>
 		const_reference find_if(Predicate pre) const
 		{
+			// empty map
+			if (empty()) {
+				return EMPTY_ITEM;
+			}
+
+			// not empty
 			bool found = false;
 			size_type pos = mPopIndex.load(std::memory_order_relaxed);
 			for (size_type i = 0; i < N; ++i) { // circle search
@@ -93,33 +101,33 @@ namespace died
 				}
 			}
 
-			return found ? mData[pos] : EMPTY_MAPPED_TYPE;
+			return found ? mData[pos] : EMPTY_ITEM;
 		}
 
 		reference operator[](key_type const& key)
 		{
 			size_type pos = find_internal(key);
-			if (INVALID_POS != pos) {
+			if (INVALID_INDEX != pos) {
 				return mData[pos];
 			}
 
 			// Not found => create new pair
-			size_type next = next_push_index();
-			mKeys[key] = next;
-			return mData[next];
+			size_type curIndex = next_push_index();
+			mKeys[key] = curIndex;
+			return mData[curIndex];
 		}
 
 		reference operator[](key_type&& key)
 		{
 			size_type pos = find_internal(key);
-			if (INVALID_POS != pos) {
+			if (INVALID_INDEX != pos) {
 				return mData[pos];
 			}
 
 			// Not found => create new pair
-			size_type next = next_push_index();
-			mKeys[std::move(key)] = next;
-			return mData[next];
+			size_type curIndex = next_push_index();
+			mKeys[std::move(key)] = curIndex;
+			return mData[curIndex];
 		}
 
 		void erase(key_type const& key)
@@ -127,13 +135,13 @@ namespace died
 			auto found = mKeys.find(key);
 
 			// Not valid
-			if (std::cend(mKeys) == found || INVALID_POS == found->second) {
+			if (std::cend(mKeys) == found || INVALID_INDEX == found->second) {
 				return;
 			}
 
 			// reset data
 			mData[found->second] = mapped_type{};
-			found->second = INVALID_POS;
+			found->second = INVALID_INDEX;
 		}
 
 		const_reference front() const
@@ -144,16 +152,15 @@ namespace died
 		size_type next_available_item()
 		{
 			// Empty data
-			if (mKeys.size() == 0) {
-				return INVALID_POS;
+			if (empty()) {
+				return mPopIndex.load(std::memory_order_relaxed);
 			}
 
 			bool found = false;
 			size_type old = mPopIndex.load(std::memory_order_relaxed);
 			size_type next = old;
 			for (size_type i = 0; i < N; ++i) { // Circle search
-				next = (next + 1) % N;
-				if (mData[next]) {
+				if (mData[++next % N]) {
 					found = true;
 					break;
 				}
@@ -161,20 +168,30 @@ namespace died
 
 			// No available data
 			if (!found) {
-				return INVALID_POS;
+				// Mark as empty map by rest 'pop index' = 'push index'
+				next = mPushIndex.load(std::memory_order_relaxed);
 			}
+
+			// Always 'pop index' <= 'push index'
+			Ensures(next <= mPushIndex.load());
 
 			// avaible item => update to atomic
 			while (!mPopIndex.compare_exchange_weak(old, next, std::memory_order_release, std::memory_order_relaxed)) {}
-			return next;
+			return next % N;
 		}
 
 	private:
 		size_type find_internal(key_type const& key) const
 		{
+			// Empty map
+			if (empty()) {
+				return INVALID_INDEX;
+			}
+
+			// not empty
 			auto found = mKeys.find(key);
-			if (std::cend(mKeys) == found || INVALID_POS == found->second) {
-				return INVALID_POS;
+			if (std::cend(mKeys) == found || INVALID_INDEX == found->second) {
+				return INVALID_INDEX;
 			}
 			return found->second;
 		}
@@ -187,5 +204,7 @@ namespace died
 		std::atomic<size_type> mPopIndex{ 0u };
 		con_vec mData{ N };
 		con_map mKeys; // Doesn't have reserve()
+		const unsigned int	INVALID_INDEX = N + 1;
+		const mapped_type	EMPTY_ITEM{};
 	};
 }
