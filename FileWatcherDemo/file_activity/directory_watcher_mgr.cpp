@@ -234,10 +234,14 @@ namespace died
 			addModel.next_available_item();
 		}
 
-		// case 1: save-as
 		auto const& rmv = removeModel.find(key);
 		auto const& modi = modifyModel.find(key);
-		if (rmv && modi) {
+		bool rmValid = static_cast<bool>(rmv);
+		bool mdValid = static_cast<bool>(modi);
+
+		// **case 1: both 'rmv' and 'modi' are invalid
+		// => This is 100% creation
+		if (!rmValid && !mdValid) {
 			SPDLOG_INFO(L"Create: {}", key);
 			erase_all(group, key);
 			// jump to next item for next step
@@ -245,24 +249,17 @@ namespace died
 			return;
 		}
 
-		// case 2: exist in modifyModel => Should skip this item because of 'copy action'
-		if (modi) {
+		// **case 2: both 'rmv' and 'modi' are valid
+		// => This is creation by 'save-as'
+		if (rmValid && mdValid) {
+			SPDLOG_INFO(L"Create: {}", key);
+			erase_all(group, key);
+			// jump to next item for next step
 			addModel.next_available_item();
 			return;
 		}
 
-		// case 2.1: exist 'file name' in removeModel => Should skip this item because of 'move action'
-		auto const& rmv2 = removeModel.find_if([filename = info.get_file_name_wstring()](auto const& el) {
-			return filename == el.get_file_name_wstring();
-		});
-		if (rmv2) {
-			addModel.next_available_item();
-			return;
-		}
-
-		// case 2.2 got data: only exist in addModel
-		SPDLOG_INFO(L"Create: {}", key);
-		erase_all(group, key);
+		// **otherwise ignore this item
 		// jump to next item for next step
 		addModel.next_available_item();
 	}
