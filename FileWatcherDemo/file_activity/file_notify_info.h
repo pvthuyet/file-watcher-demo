@@ -23,6 +23,7 @@ namespace died
 		bool is_directory() const;
 
 		size_t alive() const; // in milli-seconds
+		std::chrono::time_point<std::chrono::steady_clock> get_created_time() const;
 
 		friend bool operator==(file_notify_info const&, file_notify_info const&);
 

@@ -47,4 +47,9 @@ namespace died
 		std::chrono::duration<double, std::milli> diff = std::chrono::steady_clock::now() - mCreatedTime;
 		return static_cast<size_t>(diff.count());
 	}
+
+	std::chrono::time_point<std::chrono::steady_clock> file_notify_info::get_created_time() const
+	{
+		return mCreatedTime;
+	}
 }
