@@ -25,6 +25,8 @@ namespace died
 
 	private:
 		TimerStatus onTimer() final;
+		void erase_all(watching_group& group, std::wstring const& key) const;
+
 		void notify_attribute(watching_group& group) const;
 		void notify_security(watching_group& group) const;
 		void notify_folder_name(watching_group& group) const;
@@ -32,7 +34,9 @@ namespace died
 		void notify_create(watching_group& group);
 		void notify_remove(watching_group& group);
 		void notify_modify(watching_group& group) const;
-		void erase_all(watching_group& group, std::wstring const& key) const;
+		void notify_modify_without_modify_event(watching_group& group) const;
+		void notify_copy(watching_group& group);
+		void notify_move(watching_group& group);
 
 	private:
 		std::vector<watching_group> mWatchers;

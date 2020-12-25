@@ -40,3 +40,4 @@ gsl_____
 Debug
 *.ipch
 logger.log
+Release

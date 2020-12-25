@@ -5,9 +5,9 @@ namespace died
 {
 	void file_name_watcher::do_notify(file_notify_info info)
 	{
-		SPDLOG_DEBUG(L"{} - {}", info.get_action(), info.get_path_wstring());
+		SPDLOG_INFO(L"{} - {}", info.get_action(), info.get_path_wstring());
 		if (info.is_directory()) {
-			SPDLOG_DEBUG(L"Ignore directory");
+			SPDLOG_INFO(L"Ignore directory");
 			return;
 		}
 

@@ -90,8 +90,20 @@ namespace died
 			notify_create(el);
 			notify_remove(el);
 			notify_modify(el);
+			notify_modify_without_modify_event(el);
+			notify_copy(el);
+			notify_move(el);
 		}
 		return TimerStatus::TIMER_CONTINUE;
+	}
+
+	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key) const
+	{
+		group.mFileName.get_add().erase(key);
+		group.mFileName.get_remove().erase(key);
+		group.mFileName.get_modify().erase(key);
+		group.mAttr.get_model().erase(key);
+		group.mSecu.get_model().erase(key);
 	}
 
 	void directory_watcher_mgr::notify_attribute(watching_group& group) const
@@ -262,13 +274,12 @@ namespace died
 			// reveive: add, delete, modify (different disk)
 			std::wstring filename = info.get_file_name_wstring();
 			for (auto& w : mWatchers) {
-				auto found = w.mFileName.get_remove().find_if([&filename](auto const& item) {
+				auto const& found = w.mFileName.get_remove().find_if([&filename](auto const& item) {
 					return filename == item.get_file_name_wstring();
 				});
 
-				// this is not creation
+				// this is not creation, lets other function checking this item
 				if (found) {
-					model.next_available_item();
 					return;
 				}
 			}
@@ -281,24 +292,8 @@ namespace died
 			return;
 		}
 
-		// **case 5: Modify case
-		// receive: remove, add (may or may not 'modify') ???
-		// 'remove' must before 'add'
-		// Happen when edit image files
-		if (rmValid) {
-			std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
-			if (diff.count() > 0) {
-				SPDLOG_INFO(L"Modify: {}", key);
-				erase_all(group, key);
-				// jump to next item for next step
-				model.next_available_item();
-				return;
-			}
-		}
-
 		// **otherwise: ignore this item
-		// jump to next item for next step
-		model.next_available_item();
+		// Lets other functions checking this item
 	}
 
 	void directory_watcher_mgr::notify_remove(watching_group& group)
@@ -325,9 +320,8 @@ namespace died
 		// Case 1: check 'key' in current group
 		// this is happen when edit image file
 		// receive: delete, add, modify
-		auto addInfo = group.mFileName.get_add().find(key);
+		auto const& addInfo = group.mFileName.get_add().find(key);
 		if (addInfo) {
-			model.next_available_item();
 			return;
 		}
 
@@ -337,13 +331,12 @@ namespace died
 		// reveive: add, delete, modify (different disk)
 		std::wstring filename = info.get_file_name_wstring();
 		for (auto& w : mWatchers) {
-			auto found = w.mFileName.get_add().find_if([&filename](auto const& item) {
+			auto const& found = w.mFileName.get_add().find_if([&filename](auto const& item) {
 				return filename == item.get_file_name_wstring();
 			});
 
 			// this is not remove action
 			if (found) {
-				model.next_available_item();
 				return;
 			}
 		}
@@ -393,17 +386,172 @@ namespace died
 			model.next_available_item();
 			return;
 		}
+	}
 
+	void directory_watcher_mgr::notify_modify_without_modify_event(watching_group& group) const
+	{
+		// get model
+		auto& model = group.mFileName.get_add();
+
+		// pop item
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		// get key
+		auto key = info.get_path_wstring();
+
+		// 3. file is processing => ignore this file, jump to next one
+		if (died::fileIsProcessing(key)) {
+			model.next_available_item();
+			return;
+		}
+
+		// **case 1: Modify case
+		// receive: remove, add (may or may not 'modify') ???
+		// 'remove' must before 'add'
+		// Happen when edit image files
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (rmv) {
+			std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
+			if (diff.count() > 0) {
+				SPDLOG_INFO(L"Modify: {}", key);
+				erase_all(group, key);
+				// jump to next item for next step
+				model.next_available_item();
+				return;
+			}
+		}
+	}
+
+	void directory_watcher_mgr::notify_copy(watching_group& group)
+	{
+		// get model
+		auto& model = group.mFileName.get_add();
+
+		// pop item
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		// get key
+		auto key = info.get_path_wstring();
+
+		// 3. file is processing => ignore this file, jump to next one
+		if (died::fileIsProcessing(key)) {
+			model.next_available_item();
+			return;
+		}
+
+		// ** Goal copy: 
+		// exist in 'modify' 
+		// but NOT in 'remove'
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (!modi) {
+			// Not action copy
+			// lets other function checking this item
+			return;
+		}
+
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (rmv) {
+			// Not action copy
+			// lets other function checking this item
+			return;
+		}
+
+		// Not action copy => maybe move
+		std::wstring filename = info.get_file_name_wstring();
+		for (auto& w : mWatchers) {
+			auto const& found = w.mFileName.get_remove().find_if([&filename](auto const& item) {
+				return filename == item.get_file_name_wstring();
+			});
+
+			// this is not copy
+			// lets other function checking this item
+			if (found) {
+				return;
+			}
+		}
+
+		// This is copy
+		SPDLOG_INFO(L"Copy: {}", key);
+		erase_all(group, key);
 		// jump to next item for next step
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key) const
+	void directory_watcher_mgr::notify_move(watching_group& group)
 	{
-		group.mFileName.get_add().erase(key);
-		group.mFileName.get_remove().erase(key);
-		group.mFileName.get_modify().erase(key);
-		group.mAttr.get_model().erase(key);
-		group.mSecu.get_model().erase(key);
+		// get model
+		auto& model = group.mFileName.get_add();
+
+		// pop item
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		// get key
+		auto key = info.get_path_wstring();
+
+		// 3. file is processing => ignore this file, jump to next one
+		if (died::fileIsProcessing(key)) {
+			model.next_available_item();
+			return;
+		}
+
+		// **Goal move
+		// exist in modify
+		// exist in remove but other path
+
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (rmv) {
+			// this is not MOVE
+			// lets other function checking this item
+			return;
+		}
+
+		// Should exist filename in other path
+		std::wstring filename = info.get_file_name_wstring();
+		for (auto& w : mWatchers) {
+			auto const& found = w.mFileName.get_remove().find_if([&filename](auto const& item) {
+				return filename == item.get_file_name_wstring();
+			});
+
+			// this is MOVE
+			if (found) {
+				SPDLOG_INFO(L"Move: {} - {}", found.get_path_wstring(), key);
+				erase_all(group, key);
+				w.mFileName.get_remove().erase(found.get_path_wstring());
+				return;
+			}
+		}
 	}
 }
