@@ -70,10 +70,10 @@ namespace died
 			}
 
 			// 2. search regular expression
-			static const std::wstring TMP_FILE_PATTERN = L"(~.+\\.TMP$)|(\\\\\\..+)|(~\\$.+)";
-			if (died::StringUtils::searchRegex(wsPath, TMP_FILE_PATTERN, true)) {
-				return true;
-			}
+			//static const std::wstring TMP_FILE_PATTERN = L"(~.+\\.TMP$)|(\\\\\\..+)|(~\\$.+)";
+			//if (died::StringUtils::searchRegex(wsPath, TMP_FILE_PATTERN, true)) {
+			//	return true;
+			//}
 
 			// MicrosoftEdgeBackups folder
 			static const std::wstring EDGE_BACKUP_PATTERN = L"C:\\\\Users\\\\.+\\\\MicrosoftEdgeBackups\\\\";
@@ -87,6 +87,14 @@ namespace died
 				return true;
 			}
 			//--
+
+			//++ TODO test
+			// 2. search regular expression
+			//static const std::wstring TMP_ = L"(.+\\.TMP$)|(.+\\.crdownload$)";
+			//if (died::StringUtils::searchRegex(wsPath, TMP_, true)) {
+			//	return true;
+			//}
+
 
 			return false;
 		}

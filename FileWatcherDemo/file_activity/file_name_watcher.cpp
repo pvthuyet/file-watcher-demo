@@ -5,11 +5,11 @@ namespace died
 {
 	void file_name_watcher::do_notify(file_notify_info info)
 	{
-		SPDLOG_INFO(L"{} - {}", info.get_action(), info.get_path_wstring());
 		if (info.is_directory()) {
-			SPDLOG_INFO(L"Ignore directory");
+			//SPDLOG_INFO(L"Ignore directory");
 			return;
 		}
+		SPDLOG_INFO(L"{} - {}", info.get_action(), info.get_path_wstring());
 
 		switch (info.get_action())
 		{

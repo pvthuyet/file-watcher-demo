@@ -56,6 +56,13 @@ namespace died
 		return found.mNewName;
 	}
 
+	const rename_notify_info& model_rename::find_by_old_name(std::wstring const& key) const
+	{
+		return mData.find_if([&key](auto const& item) {
+			return key == item.mOldName.get_path_wstring();
+		});
+	}
+
 	void model_rename::erase(std::wstring const& key)
 	{
 		mData.erase(key);

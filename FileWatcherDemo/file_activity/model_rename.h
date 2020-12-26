@@ -27,6 +27,8 @@ namespace died
 		const rename_notify_info& front() const;
 
 		const file_notify_info& find(std::wstring const& key) const;
+		const rename_notify_info& find_by_old_name(std::wstring const& key) const;
+
 		void erase(std::wstring const& key);
 		unsigned int next_available_item();
 

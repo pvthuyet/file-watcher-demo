@@ -83,22 +83,23 @@ namespace died
 	TimerStatus directory_watcher_mgr::onTimer()
 	{
 		for (auto& el : mWatchers) {
-			notify_attribute(el);
-			notify_security(el);
-			notify_folder_name(el);
-			notify_rename(el);
-			notify_create(el);
-			notify_remove(el);
-			notify_modify(el);
-			notify_modify_without_modify_event(el);
-			notify_copy(el);
-			notify_move(el);
+			checking_attribute(el);
+			checking_security(el);
+			checking_folder_name(el);
+			checking_rename(el);
+			checking_create(el);
+			checking_remove(el);
+			checking_modify(el);
+			checking_modify_without_modify_event(el);
+			checking_copy(el);
+			checking_move(el);
 		}
 		return TimerStatus::TIMER_CONTINUE;
 	}
 
-	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key) const
+	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key)
 	{
+		SPDLOG_INFO(key);
 		group.mFileName.get_add().erase(key);
 		group.mFileName.get_remove().erase(key);
 		group.mFileName.get_modify().erase(key);
@@ -106,7 +107,7 @@ namespace died
 		group.mSecu.get_model().erase(key);
 	}
 
-	void directory_watcher_mgr::notify_attribute(watching_group& group) const
+	void directory_watcher_mgr::checking_attribute(watching_group& group) 
 	{
 		auto& model = group.mAttr.get_model();
 		auto const& info = model.front();
@@ -135,7 +136,7 @@ namespace died
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::notify_security(watching_group& group) const
+	void directory_watcher_mgr::checking_security(watching_group& group) 
 	{
 		auto& model = group.mSecu.get_model();
 		auto const& info = model.front();
@@ -164,7 +165,7 @@ namespace died
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::notify_folder_name(watching_group& group) const
+	void directory_watcher_mgr::checking_folder_name(watching_group& group) 
 	{
 		auto& model = group.mFolderName.get_model();
 		auto const& info = model.front();
@@ -193,7 +194,7 @@ namespace died
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::notify_rename(watching_group& group) const
+	void directory_watcher_mgr::checking_rename(watching_group& group) 
 	{
 		auto& model = group.mFileName.get_rename();
 		auto const& info = model.front();
@@ -209,11 +210,38 @@ namespace died
 			return;
 		}
 
+		auto key = info.mNewName.get_path_wstring();
 		//++ TODO filter
 		//...
+		auto const& add = group.mFileName.get_add().find(key);
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (add && rmv) {
+			std::chrono::duration<double> diff = add.get_created_time() - rmv.get_created_time();
+			if (diff.count() > 0) {
+				SPDLOG_INFO(L"Rename: create file: {}, old name: {}", key, info.mOldName.get_path_wstring());
+			}
+			else {
+				SPDLOG_INFO(L"Rename: temporary file: {}, old name: {}", key, info.mOldName.get_path_wstring());
+			}
+			model.next_available_item();
+			return;
+		}
+
+		// **Case: old name exists in 'create' model
+		// This happend when create a office files
+		// => This is not rename action
+		auto const& add2 = group.mFileName.get_add().find(info.mOldName.get_path_wstring());
+		if (add2) {
+			SPDLOG_INFO(L"Rename: This is not rename action. Maybe office files. {} - {}", 
+				info.mOldName.get_path_wstring(), 
+				info.mNewName.get_path_wstring());
+			model.next_available_item();
+			return;
+		}
+
 
 		// 4. notify this item
-		SPDLOG_INFO(L"{} - {}", info.mOldName.get_path_wstring(), info.mNewName.get_path_wstring());
+		SPDLOG_INFO(L"Rename: {} - {}", info.mOldName.get_path_wstring(), info.mNewName.get_path_wstring());
 
 		// 5. erase processed item
 		model.erase(info.get_key());
@@ -222,7 +250,7 @@ namespace died
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::notify_create(watching_group& group)
+	void directory_watcher_mgr::checking_create(watching_group& group)
 	{
 		// get model
 		auto& model = group.mFileName.get_add();
@@ -250,7 +278,27 @@ namespace died
 			return;
 		}
 
+		// **Case 1: create a temporary file
 		auto const& rmv = group.mFileName.get_remove().find(key);
+
+		// this happend when create office file
+		auto& renameModel = group.mFileName.get_rename();
+		auto const& remTmpNew = renameModel.find(key);
+		auto const& remTmpOld = renameModel.find_by_old_name(key);
+		if (remTmpNew && remTmpOld) {
+			std::chrono::duration<double> diff = remTmpNew.get_created_time() - remTmpOld.mNewName.get_created_time();
+			if (diff.count() > 0) {
+				auto tmpKey = remTmpOld.get_key();
+				SPDLOG_DEBUG(L"Create: {}", key);
+				SPDLOG_DEBUG(L"Create: This is temporary file {}", tmpKey);
+				erase_all(group, key);
+				erase_all(group, tmpKey);
+				renameModel.erase(key);
+				renameModel.erase(tmpKey);
+				return;
+			}
+		}
+
 		auto const& modi = group.mFileName.get_modify().find(key);
 		bool rmValid = static_cast<bool>(rmv);
 		bool mdValid = static_cast<bool>(modi);
@@ -296,7 +344,7 @@ namespace died
 		// Lets other functions checking this item
 	}
 
-	void directory_watcher_mgr::notify_remove(watching_group& group)
+	void directory_watcher_mgr::checking_remove(watching_group& group)
 	{
 		auto& model = group.mFileName.get_remove();
 		auto const& info = model.front();
@@ -347,7 +395,7 @@ namespace died
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::notify_modify(watching_group& group) const
+	void directory_watcher_mgr::checking_modify(watching_group& group) 
 	{
 		// get model
 		auto& model = group.mFileName.get_modify();
@@ -388,7 +436,7 @@ namespace died
 		}
 	}
 
-	void directory_watcher_mgr::notify_modify_without_modify_event(watching_group& group) const
+	void directory_watcher_mgr::checking_modify_without_modify_event(watching_group& group) 
 	{
 		// get model
 		auto& model = group.mFileName.get_add();
@@ -424,6 +472,17 @@ namespace died
 		if (rmv) {
 			std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
 			if (diff.count() > 0) {
+
+				// **Case: office create file
+				// When create word, excel, etc
+				// Receive tmp file then rename
+				// => lets this file process in creation
+				auto const& rem = group.mFileName.get_rename().find(key);
+				if (rem) {
+					SPDLOG_INFO(L"Modify: This is create office file - {}", key);
+					return;
+				}
+
 				SPDLOG_INFO(L"Modify: {}", key);
 				erase_all(group, key);
 				// jump to next item for next step
@@ -433,7 +492,7 @@ namespace died
 		}
 	}
 
-	void directory_watcher_mgr::notify_copy(watching_group& group)
+	void directory_watcher_mgr::checking_copy(watching_group& group)
 	{
 		// get model
 		auto& model = group.mFileName.get_add();
@@ -492,6 +551,18 @@ namespace died
 			}
 		}
 
+		// **Case temporary file
+		// this file will be rename to another file
+		// => Lets 'creation' processing this file
+		auto const& remTmp = group.mFileName.get_rename().find_by_old_name(key);
+		if (remTmp) {
+			std::chrono::duration<double> diff = remTmp.mOldName.get_created_time() - info.get_created_time();
+			if (diff.count() > 0) {
+				SPDLOG_DEBUG(L"Copy: This is temporary file {}", key);
+				return;
+			}
+		}
+
 		// This is copy
 		SPDLOG_INFO(L"Copy: {}", key);
 		erase_all(group, key);
@@ -499,7 +570,7 @@ namespace died
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::notify_move(watching_group& group)
+	void directory_watcher_mgr::checking_move(watching_group& group)
 	{
 		// get model
 		auto& model = group.mFileName.get_add();
