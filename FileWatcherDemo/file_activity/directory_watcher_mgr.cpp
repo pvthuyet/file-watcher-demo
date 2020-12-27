@@ -289,13 +289,25 @@ namespace died
 		//** case 1: create file by temporary
 		// happen when save-as word, excel, etc
 		std::wstring tempNewName, tempOldName;
-		if (is_create_by_temporary(info, group, tempNewName, tempOldName)) {
-			SPDLOG_INFO(L"Create by temporary {} - {} - {}", key, tempNewName, tempOldName);
+		if (is_create_by_temporary_round_trip(info, group, tempNewName, tempOldName)) {
+			SPDLOG_INFO(L"Create by temporary round trip {} - {} - {}", key, tempNewName, tempOldName);
 			erase_all(group, key);
 			erase_all(group, tempNewName);
 			erase_all(group, tempOldName);
 			erase_rename(group, key);
 			erase_rename(group, tempNewName);
+			model.next_available_item();
+			return;
+		}
+
+		std::wstring middleName, finalName;
+		if (is_create_by_temporary_one_way(info, group, middleName, finalName)) {
+			SPDLOG_INFO(L"Create by temporary one way {} - {} - {}", key, middleName, finalName);
+			erase_all(group, key);
+			erase_all(group, middleName);
+			erase_all(group, finalName);
+			erase_rename(group, middleName);
+			erase_rename(group, finalName);
 			model.next_available_item();
 			return;
 		}
@@ -514,7 +526,13 @@ namespace died
 
 		// **case1: create temporary file
 		std::wstring temp1, temp2;
-		if (is_create_by_temporary(info, group, temp1, temp2)) {
+		if (is_create_by_temporary_round_trip(info, group, temp1, temp2)) {
+			// will process in creation
+			return;
+		}
+
+		std::wstring middleName, finalName;
+		if (is_create_by_temporary_one_way(info, group, middleName, finalName)) {
 			// will process in creation
 			return;
 		}
@@ -581,7 +599,13 @@ namespace died
 
 		// **case1: create temporary file
 		std::wstring temp1, temp2;
-		if (is_create_by_temporary(info, group, temp1, temp2)) {
+		if (is_create_by_temporary_round_trip(info, group, temp1, temp2)) {
+			// will process in creation
+			return;
+		}
+
+		std::wstring middleName, finalName;
+		if (is_create_by_temporary_one_way(info, group, middleName, finalName)) {
 			// will process in creation
 			return;
 		}
@@ -666,7 +690,13 @@ namespace died
 
 		// **case1: create temporary file
 		std::wstring temp1, temp2;
-		if (is_create_by_temporary(info, group, temp1, temp2)) {
+		if (is_create_by_temporary_round_trip(info, group, temp1, temp2)) {
+			// will process in creation
+			return;
+		}
+
+		std::wstring middleName, finalName;
+		if (is_create_by_temporary_one_way(info, group, middleName, finalName)) {
 			// will process in creation
 			return;
 		}
@@ -711,7 +741,7 @@ namespace died
 		}
 	}
 
-	bool directory_watcher_mgr::is_create_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName)
+	bool directory_watcher_mgr::is_create_by_temporary_round_trip(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName)
 	{
 		// **behaviour
 		// step 1. create 1.docx
@@ -753,12 +783,64 @@ namespace died
 		return true;
 	}
 
+	bool directory_watcher_mgr::is_create_by_temporary_one_way(file_notify_info const& info, watching_group& group, std::wstring& middleName, std::wstring& finalName)
+	{
+		// **behaviour
+		// step 1. create ~1.tmp
+		// step 2. modify ~1.tmp
+		// step 3. rename ~1.tmp -> 1.jpg.crdownload
+		// step 4. rename 1.jpg.crdownload -> 1.jpg
+		// Hence, '1~.tmp' and 1.jpg.crdownload are temporary file 
+		// and '1.jpg' is the real modify file
+
+		auto key = info.get_path_wstring(); // step 1 (~.tmp)
+		auto const& modi = group.mFileName.get_modify().find(key); // step 2 (~1.tmp)
+		if (!modi) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff1 = modi.get_created_time() - info.get_created_time();
+		if (diff1.count() < 0) {
+			return false;
+		}
+
+		auto const& ren1 = group.mFileName.get_rename().find_by_old_name(key); // step 3
+		if (!ren1) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff2 = ren1.mNewName.get_created_time() - modi.get_created_time();
+		if (diff2.count() < 0) {
+			return false;
+		}
+
+		middleName = ren1.mNewName.get_path_wstring();
+
+		// step 4: very file realFile
+		auto const& ren2 = group.mFileName.get_rename().find_by_old_name(middleName);
+		if (!ren2) {
+			return false;
+		}
+
+		if (ren2) {
+			std::chrono::duration<double> diff3 = ren2.mNewName.get_created_time() - ren1.mNewName.get_created_time();
+			if (diff3.count() < 0) {
+				return false;
+			}
+		}
+
+		finalName = ren2.mNewName.get_path_wstring();
+
+		return true;
+	}
+
 	bool directory_watcher_mgr::is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile)
 	{
 		// **behaviour
 		// step 1. create ~.tmp
 		// step 2. modify ~.tmp
 		// step 3. rename ~.tmp -> 1.docx
+		// step 4. 1.docx doesn't exist in rename model
 		// Hence, '~.tmp' is temporary file and '1.docx' is the real modify file
 
 		auto key = info.get_path_wstring(); // step 1 (~.tmp)
@@ -772,17 +854,24 @@ namespace died
 			return false;
 		}
 
-		auto const& ren = group.mFileName.get_rename().find_by_old_name(key); // step 3
-		if (!ren) {
+		auto const& ren1 = group.mFileName.get_rename().find_by_old_name(key); // step 3
+		if (!ren1) {
 			return false;
 		}
 
-		std::chrono::duration<double> diff2 = ren.mNewName.get_created_time() - modi.get_created_time();
+		std::chrono::duration<double> diff2 = ren1.mNewName.get_created_time() - modi.get_created_time();
 		if (diff2.count() < 0) {
 			return false;
 		}
 
-		realFile = ren.mNewName.get_path_wstring();
+		realFile = ren1.mNewName.get_path_wstring();
+
+		// step 4: very file realFile
+		auto const& ren2 = group.mFileName.get_rename().find_by_old_name(realFile);
+		if (ren2) {
+			return false;
+		}
+
 		return true;
 	}
 
@@ -823,6 +912,7 @@ namespace died
 		// step 1. create ~.tmp
 		// step 2. modify ~.tmp
 		// step 3. rename ~.tmp -> 1.docx
+		// step 4. 1.docx must not exist in rename model
 		// Hence, '~.tmp' is temporary file and '1.docx' is the real modify file
 
 		auto key = info.get_path_wstring(); // step 1 (~.tmp)
@@ -836,17 +926,23 @@ namespace died
 			return false;
 		}
 
-		auto const& ren = group.mFileName.get_rename().find_by_old_name(key); // step 3
-		if (!ren) {
+		auto const& ren1 = group.mFileName.get_rename().find_by_old_name(key); // step 3
+		if (!ren1) {
 			return false;
 		}
 
-		std::chrono::duration<double> diff2 = ren.mNewName.get_created_time() - info.get_created_time();
+		std::chrono::duration<double> diff2 = ren1.mNewName.get_created_time() - info.get_created_time();
 		if (diff2.count() < 0) {
 			return false;
 		}
 
-		realFile = ren.mNewName.get_path_wstring();
+		realFile = ren1.mNewName.get_path_wstring();
+
+		// step 4: very file realFile
+		auto const& ren2 = group.mFileName.get_rename().find_by_old_name(realFile);
+		if (ren2) {
+			return false;
+		}
 
 		return true;
 	}

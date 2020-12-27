@@ -40,7 +40,9 @@ namespace died
 		void checking_move(watching_group& group);
 
 	private:
-		bool is_create_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
+		bool is_create_by_temporary_round_trip(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
+		bool is_create_by_temporary_one_way(file_notify_info const& info, watching_group& group, std::wstring& middleName, std::wstring& finalName);
+
 		bool is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile);
 		bool is_create_middle_temporary(file_notify_info const& info, watching_group& group);
 
