@@ -286,12 +286,11 @@ namespace died
 			return;
 		}
 
-		//** case 1: check the real file
+		//** case 1: create file by temporary
+		// happen when save-as word, excel, etc
 		std::wstring tempNewName, tempOldName;
-		if (is_real_file(info, group, tempNewName, tempOldName)) {
-			SPDLOG_INFO(L"Create: {}", key);
-			SPDLOG_INFO(L"Create: temporary 1 {}", tempNewName);
-			SPDLOG_INFO(L"Create: temporary 2 {}", tempOldName);
+		if (is_create_by_temporary(info, group, tempNewName, tempOldName)) {
+			SPDLOG_INFO(L"Create by temporary {} - {} - {}", key, tempNewName, tempOldName);
 			erase_all(group, key);
 			erase_all(group, tempNewName);
 			erase_all(group, tempOldName);
@@ -300,39 +299,12 @@ namespace died
 			return;
 		}
 
-		// **Case 1: create a temporary file
+		// case 2: modify by temporary file
 		std::wstring realFile;
-		if (is_temporary_file(info, group, realFile)) {
-			SPDLOG_INFO(L"Create: {}", realFile);
-			SPDLOG_INFO(L"Create: temporary {}", key);
-			erase_all(group, key);
-			erase_all(group, realFile);
-			erase_rename(group, realFile);
-			model.next_available_item();
+		if (is_create_temporary_for_modify(info, group, realFile)) {
+			// will process in checking_modify
 			return;
 		}
-
-		// this happend when create office file
-		
-
-
-
-		//auto& renameModel = group.mFileName.get_rename();
-		//auto const& remTmpNew = renameModel.find(key);
-		//auto const& remTmpOld = renameModel.find_by_old_name(key);
-		//if (remTmpNew && remTmpOld) {
-		//	std::chrono::duration<double> diff = remTmpNew.get_created_time() - remTmpOld.mNewName.get_created_time();
-		//	if (diff.count() > 0) {
-		//		auto tmpKey = remTmpOld.get_key();
-		//		SPDLOG_DEBUG(L"Create: {}", key);
-		//		SPDLOG_DEBUG(L"Create: This is temporary file {}", tmpKey);
-		//		erase_all(group, key);
-		//		erase_all(group, tmpKey);
-		//		renameModel.erase(key);
-		//		renameModel.erase(tmpKey);
-		//		return;
-		//	}
-		//}
 
 		auto const& rmv = group.mFileName.get_remove().find(key);
 		auto const& modi = group.mFileName.get_modify().find(key);
@@ -457,6 +429,23 @@ namespace died
 			return;
 		}
 
+		std::wstring realFile;
+		if (is_modify_by_temporary(info, group, realFile)) {
+			// The realFile must not in add
+			auto const& addRealFile = group.mFileName.get_add().find(realFile);
+			if (addRealFile) {
+				// will process in creation
+				return;
+			}
+
+			SPDLOG_INFO(L"Modify by temporary file: {} - {}", realFile, key);
+			erase_all(group, key);
+			erase_all(group, realFile);
+			erase_rename(group, realFile);
+			model.next_available_item();
+			return;
+		}
+
 		auto const& add = group.mFileName.get_add().find(key);
 		auto const& rmv = group.mFileName.get_remove().find(key);
 		bool addValid = static_cast<bool>(add);
@@ -500,47 +489,44 @@ namespace died
 			return;
 		}
 
-		// **Case 1: temporary file
-		// When create word, excel, etc
-		// Receive tmp file then rename
-		// => lets this file process in creation
-		//std::wstring temp;
-		//if (is_temporary_file(info, group, temp)) {
-		//	SPDLOG_INFO(L"Modify: ignore temporary file - {}", key);
-		//	return;
-		//}
+		// Make sure not exist in modify
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (modi) {
+			return;
+		}
 
-		// **Case 2: this file will be rename
-		// => lets this file process in creation
-		if (will_be_rename(info, group)) {
+		// **case1: create temporary file
+		std::wstring temp1, temp2;
+		if (is_create_by_temporary(info, group, temp1, temp2)) {
+			// will process in creation
 			return;
 		}
 
 		std::wstring realFile;
-		if (is_modify_by_temporary(info, group, realFile)) {
-			SPDLOG_INFO(L"Modify: {}", realFile);
-			SPDLOG_INFO(L"Modify: temporary file created {}", key);
-			erase_all(group, key);
-			erase_rename(group, realFile);
-			model.next_available_item();
+		if (is_create_temporary_for_modify(info, group, realFile)) {
+			// will be processs in modify
 			return;
 		}
 
+
 		// **case 1: Modify case
-		// receive: remove, add (may or may not 'modify') ???
+		// receive: remove, add and not 'modify'
 		// 'remove' must before 'add'
 		// Happen when edit image files
 		auto const& rmv = group.mFileName.get_remove().find(key);
-		if (rmv) {
-			std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
-			if (diff.count() > 0) {
-				SPDLOG_INFO(L"Modify: {}", key);
-				erase_all(group, key);
-				// jump to next item for next step
-				model.next_available_item();
-				return;
-			}
+		if (!rmv) {
+			return;
 		}
+
+		std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
+		if (diff.count() < 0) {
+			return;
+		}
+
+		SPDLOG_INFO(L"Modify: {}", key);
+		erase_all(group, key);
+		// jump to next item for next step
+		model.next_available_item();
 	}
 
 	void directory_watcher_mgr::checking_copy(watching_group& group)
@@ -571,6 +557,19 @@ namespace died
 			return;
 		}
 
+		// **case1: create temporary file
+		std::wstring temp1, temp2;
+		if (is_create_by_temporary(info, group, temp1, temp2)) {
+			// will process in creation
+			return;
+		}
+
+		std::wstring realFile;
+		if (is_create_temporary_for_modify(info, group, realFile)) {
+			// will be processs in modify
+			return;
+		}
+
 		// ** Goal copy: 
 		// exist in 'modify' 
 		// but NOT in 'remove'
@@ -587,22 +586,6 @@ namespace died
 			// lets other function checking this item
 			return;
 		}
-
-		// **Case 2: this file will be rename
-		// => lets this file process in creation
-		if (will_be_rename(info, group)) {
-			return;
-		}
-
-		// **Case temporary file
-		// When create word, excel, etc
-		// Receive tmp file then rename
-		// => lets this file process in creation
-		//std::wstring temp;
-		//if (is_temporary_file(info, group, temp)) {
-		//	SPDLOG_INFO(L"Copy: ignore temporary file - {}", key);
-		//	return;
-		//}
 
 		// Not action copy => maybe move
 		std::wstring filename = info.get_file_name_wstring();
@@ -653,6 +636,19 @@ namespace died
 			return;
 		}
 
+		// **case1: create temporary file
+		std::wstring temp1, temp2;
+		if (is_create_by_temporary(info, group, temp1, temp2)) {
+			// will process in creation
+			return;
+		}
+
+		std::wstring realFile;
+		if (is_create_temporary_for_modify(info, group, realFile)) {
+			// will be processs in modify
+			return;
+		}
+
 		// **Goal move
 		// exist in modify
 		// exist in remove but other path
@@ -663,22 +659,6 @@ namespace died
 			// lets other function checking this item
 			return;
 		}
-
-		// **Case 2: this file will be rename
-		// => lets this file process in creation
-		if (will_be_rename(info, group)) {
-			return;
-		}
-
-		// **Case temporary file
-		// When create word, excel, etc
-		// Receive tmp file then rename
-		// => lets this file process in creation
-		//std::wstring temp;
-		//if (is_temporary_file(info, group, temp)) {
-		//	SPDLOG_INFO(L"Move: ignore temporary file - {}", key);
-		//	return;
-		//}
 
 		// Should exist filename in other path
 		std::wstring filename = info.get_file_name_wstring();
@@ -758,71 +738,112 @@ namespace died
 		return false;
 	}
 
-	bool directory_watcher_mgr::is_real_file(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName)
+	bool directory_watcher_mgr::is_create_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName)
 	{
 		// **behaviour
-		// 1. delete 1.docx
-		// 2. create 1.docx
-		// 3. rename 1.docx -> 1.docx~RFacd3b6.TMP
-		// 4. rename ~1.tmp -> 1.docx
+		// step 1. create 1.docx
+		// step 2. rename 1.docx -> 1.docx~RFacd3b6.TMP
+		// step 3. rename ~1.tmp -> 1.docx
 		// Hence, '1.docx~RFacd3b6.TMP' and '~1.tmp' is temporary file
 		// '1.docx' is final file
 
-		// Strong condition:
+		// step 4: Strong condition:
 		// 1.docx is not deleted
 		// in-case it is deleted => rename time newer than deleted time
 
-		auto key = info.get_path_wstring(); // this is '~1.tmp'
+		auto key = info.get_path_wstring(); // this is '1.docx'
 		auto const& renameModel = group.mFileName.get_rename();
-		auto const& ren1 = renameModel.find_by_old_name(key);
-		auto const& ren2 = renameModel.find(key);
-		if (ren1 && ren2) {
-			std::chrono::duration<double> diff = ren2.mNewName.get_created_time() - ren1.mNewName.get_created_time();
-			if (diff.count() < 0) {
+		auto const& ren1 = renameModel.find_by_old_name(key); // step 2
+		auto const& ren2 = renameModel.find(key); // step 3
+
+		if (!ren1 || !ren2) {
+			return false;
+		}
+
+		// checking the time
+		std::chrono::duration<double> diff = ren2.mNewName.get_created_time() - ren1.mNewName.get_created_time();
+		if (diff.count() < 0) {
+			return false;
+		}
+
+		// step 4
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (rmv) {
+			std::chrono::duration<double> diff2 = ren2.mNewName.get_created_time() - rmv.get_created_time();
+			if (diff2.count() < 0) {
 				return false;
 			}
-
-			auto const& rmv = group.mFileName.get_remove().find(key);
-			if (rmv) {
-				std::chrono::duration<double> diff2 = ren2.mNewName.get_created_time() - rmv.get_created_time();
-				if (diff2.count() < 0) {
-					return false;
-				}
-			}
-
-			tempNewName = ren1.mNewName.get_path_wstring();
-			tempOldName = ren2.mOldName.get_path_wstring();
-			return true;
 		}
-		return false;
+
+		tempNewName = ren1.mNewName.get_path_wstring(); // 1.docx~RFacd3b6.TMP
+		tempOldName = ren2.mOldName.get_path_wstring(); // ~1.tmp
+		return true;
+	}
+
+	bool directory_watcher_mgr::is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile)
+	{
+		// **behaviour
+		// step 1. create ~.tmp
+		// step 2. modify ~.tmp
+		// step 3. rename ~.tmp -> 1.docx
+		// Hence, '~.tmp' is temporary file and '1.docx' is the real modify file
+
+		auto key = info.get_path_wstring(); // step 1 (~.tmp)
+		auto const& modi = group.mFileName.get_modify().find(key); // step 2 (~.tmp)
+		if (!modi) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff1 = modi.get_created_time() - info.get_created_time();
+		if (diff1.count() < 0) {
+			return false;
+		}
+
+		auto const& ren = group.mFileName.get_rename().find_by_old_name(key); // step 3
+		if (!ren) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff2 = ren.mNewName.get_created_time() - modi.get_created_time();
+		if (diff2.count() < 0) {
+			return false;
+		}
+
+		realFile = ren.mNewName.get_path_wstring();
+		return true;
 	}
 
 	bool directory_watcher_mgr::is_modify_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& realFile)
 	{
 		// **behaviour
-		// 1. create 1.docx~RFacd3b6.TMP
-		// 2. rename 1.docx~RFacd3b6.TMP -> 1.docx
-		// 3. delete 1.docx~RFacd3b6.TMP
-		// Hence, '1.docx~RFacd3b6.TMP' is temporary file
-		// '1.docx' is the read modify file
-		auto key = info.get_path_wstring();
-		auto const& rmv = group.mFileName.get_remove().find(key);
-		if (!rmv) {
+		// step 1. create ~.tmp
+		// step 2. modify ~.tmp
+		// step 3. rename ~.tmp -> 1.docx
+		// Hence, '~.tmp' is temporary file and '1.docx' is the real modify file
+
+		auto key = info.get_path_wstring(); // step 1 (~.tmp)
+		auto const& add = group.mFileName.get_add().find(key); // step 2 (~.tmp)
+		if (!add) {
 			return false;
 		}
 
-		std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
-		if (diff.count() > 0) {
+		std::chrono::duration<double> diff1 = info.get_created_time() - add.get_created_time();
+		if (diff1.count() < 0) {
 			return false;
 		}
 
-		auto const& ren = group.mFileName.get_rename().find_by_old_name(key);
+		auto const& ren = group.mFileName.get_rename().find_by_old_name(key); // step 3
 		if (!ren) {
 			return false;
 		}
 
-		//++ TODO check retname time and create time
-		realFile = ren.get_key();
+		std::chrono::duration<double> diff2 = ren.mNewName.get_created_time() - info.get_created_time();
+		if (diff2.count() < 0) {
+			return false;
+		}
+
+		realFile = ren.mNewName.get_path_wstring();
+
 		return true;
 	}
 }

@@ -39,10 +39,13 @@ namespace died
 		void checking_copy(watching_group& group);
 		void checking_move(watching_group& group);
 
+	private:
+		bool is_create_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
+		bool is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile);
+
+		bool is_modify_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& realFile);
 		bool will_be_rename(file_notify_info const& info, watching_group& group);
 		bool is_temporary_file(file_notify_info const& info, watching_group& group, std::wstring& realFile);
-		bool is_real_file(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
-		bool is_modify_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& realFile);
 
 	private:
 		std::vector<watching_group> mWatchers;
