@@ -3,6 +3,9 @@
 
 #pragma once
 
+#if  __has_include(<filesystem>)
+#include <filesystem>
+#else
 // We haven't checked which filesystem to include yet
 #ifndef INCLUDE_STD_FILESYSTEM_EXPERIMENTAL
 
@@ -74,3 +77,4 @@ namespace std {
 #endif // #ifndef INCLUDE_STD_FILESYSTEM_EXPERIMENTAL
 
 #endif // !STD_FILESYSTEM_H
+#endif

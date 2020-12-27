@@ -26,6 +26,7 @@ namespace died
 	private:
 		TimerStatus onTimer() final;
 		void erase_all(watching_group& group, std::wstring const& key);
+		void erase_rename(watching_group& group, std::wstring const& key);
 
 		void checking_attribute(watching_group& group);
 		void checking_security(watching_group& group);
@@ -37,6 +38,11 @@ namespace died
 		void checking_modify_without_modify_event(watching_group& group);
 		void checking_copy(watching_group& group);
 		void checking_move(watching_group& group);
+
+		bool will_be_rename(file_notify_info const& info, watching_group& group);
+		bool is_temporary_file(file_notify_info const& info, watching_group& group, std::wstring& realFile);
+		bool is_real_file(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
+		bool is_modify_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& realFile);
 
 	private:
 		std::vector<watching_group> mWatchers;

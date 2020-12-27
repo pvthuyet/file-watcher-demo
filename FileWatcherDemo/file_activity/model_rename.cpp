@@ -50,10 +50,9 @@ namespace died
 		return mData.front();
 	}
 
-	const file_notify_info& model_rename::find(std::wstring const& key) const
+	const rename_notify_info& model_rename::find(std::wstring const& key) const
 	{
-		auto const& found = mData.find(key);
-		return found.mNewName;
+		return mData.find(key);
 	}
 
 	const rename_notify_info& model_rename::find_by_old_name(std::wstring const& key) const
