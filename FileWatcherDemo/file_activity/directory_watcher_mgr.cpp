@@ -207,7 +207,7 @@ namespace died
 		auto& model = group.mFileName.get_rename();
 		auto const& info = model.front();
 
-		//1. Invlid item => should jump to next one for next step
+		// 1. Invlid item => should jump to next one for next step
 		if (!info) {
 			model.next_available_item();
 			return;
@@ -218,43 +218,54 @@ namespace died
 			return;
 		}
 
-		auto key = info.mNewName.get_path_wstring();
-		//++ TODO filter
-		//...
-		auto const& add = group.mFileName.get_add().find(key);
-		auto const& rmv = group.mFileName.get_remove().find(key);
-		if (add && rmv) {
-			std::chrono::duration<double> diff = add.get_created_time() - rmv.get_created_time();
-			if (diff.count() > 0) {
-				SPDLOG_INFO(L"Rename: create file: {}, old name: {}", key, info.mOldName.get_path_wstring());
-			}
-			else {
-				SPDLOG_INFO(L"Rename: temporary file: {}, old name: {}", key, info.mOldName.get_path_wstring());
-			}
+		// **Goal of rename
+		// newName and oldName should not appear in 'add' or 'remove' or 'modify'
+
+		auto oldName = info.mOldName.get_path_wstring();
+		auto newName = info.mNewName.get_path_wstring();
+
+		// 3. checking in add
+		auto const& addOld = group.mFileName.get_add().find(oldName);
+		if (addOld) {
 			model.next_available_item();
 			return;
 		}
 
-		// **Case: old name exists in 'create' model
-		// This happend when create a office files
-		// => This is not rename action
-		auto const& add2 = group.mFileName.get_add().find(info.mOldName.get_path_wstring());
-		if (add2) {
-			SPDLOG_INFO(L"Rename: This is not rename action. Maybe office files. {} - {}", 
-				info.mOldName.get_path_wstring(), 
-				info.mNewName.get_path_wstring());
+		auto const& addNew = group.mFileName.get_add().find(newName);
+		if (addNew) {
 			model.next_available_item();
 			return;
 		}
 
+		// 4. checking in remove
+		auto const& rmvOld = group.mFileName.get_remove().find(oldName);
+		if (rmvOld) {
+			model.next_available_item();
+			return;
+		}
 
-		// 4. notify this item
-		SPDLOG_INFO(L"Rename: {} - {}", info.mOldName.get_path_wstring(), info.mNewName.get_path_wstring());
+		auto const& rmvNew = group.mFileName.get_remove().find(newName);
+		if (rmvNew) {
+			model.next_available_item();
+			return;
+		}
 
-		// 5. erase processed item
-		model.erase(info.get_key());
+		// 5. checking in modify
+		auto const& modiOld = group.mFileName.get_modify().find(oldName);
+		if (modiOld) {
+			model.next_available_item();
+			return;
+		}
 
-		// 6. jump to next item for next step
+		auto const& modiNew = group.mFileName.get_modify().find(newName);
+		if (modiNew) {
+			model.next_available_item();
+			return;
+		}
+
+		// 6. Finally this is 100% rename
+		SPDLOG_INFO(L"Rename: {} - {}", oldName, newName);
+		erase_rename(group, newName);
 		model.next_available_item();
 	}
 
@@ -282,6 +293,13 @@ namespace died
 
 		// 3. file is processing => ignore this file, jump to next one
 		if (died::fileIsProcessing(key)) {
+			model.next_available_item();
+			return;
+		}
+
+		if (is_create_pure(info, group)) {
+			SPDLOG_INFO(L"Create pure {}", key);
+			erase_all(group, key);
 			model.next_available_item();
 			return;
 		}
@@ -328,6 +346,14 @@ namespace died
 			model.next_available_item();
 			return;
 		}
+
+
+
+
+
+
+
+
 
 		auto const& rmv = group.mFileName.get_remove().find(key);
 		auto const& modi = group.mFileName.get_modify().find(key);
@@ -518,6 +544,12 @@ namespace died
 			return;
 		}
 
+		// **Case 1: create pure
+		if (is_create_pure(info, group)) {
+			// will be process in creation
+			return;
+		}
+
 		// Make sure not exist in modify
 		auto const& modi = group.mFileName.get_modify().find(key);
 		if (modi) {
@@ -594,6 +626,12 @@ namespace died
 		// 3. file is processing => ignore this file, jump to next one
 		if (died::fileIsProcessing(key)) {
 			model.next_available_item();
+			return;
+		}
+
+		// **Case 1: create pure
+		if (is_create_pure(info, group)) {
+			// will be process in creation
 			return;
 		}
 
@@ -688,6 +726,12 @@ namespace died
 			return;
 		}
 
+		// **Case 1: create pure
+		if (is_create_pure(info, group)) {
+			// will be process in creation
+			return;
+		}
+
 		// **case1: create temporary file
 		std::wstring temp1, temp2;
 		if (is_create_by_temporary_round_trip(info, group, temp1, temp2)) {
@@ -739,6 +783,31 @@ namespace died
 				return;
 			}
 		}
+	}
+
+	bool directory_watcher_mgr::is_create_pure(file_notify_info const& info, watching_group& group)
+	{
+		// **behaviour
+		// step 1. create 1.txt
+		// should not exist in others
+		auto key = info.get_path_wstring();
+
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (rmv) {
+			return false;
+		}
+
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (modi) {
+			return false;
+		}
+
+		auto const& ren = group.mFileName.get_rename().find(key);
+		if (ren) {
+			return false;
+		}
+
+		return true;
 	}
 
 	bool directory_watcher_mgr::is_create_by_temporary_round_trip(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName)

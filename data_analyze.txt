@@ -1,0 +1,151 @@
+CREATE TXT by explorer no change name => done
+[2020-12-28_08:34:41 343] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Text Document (2).txt
+
+[2020-12-28_08:35:19 028] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Text Document (3).txt
+
+CREATE TXT by explorer CHANG NAME
+[2020-12-28_08:36:05 086] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Text Document (4).txt
+[2020-12-28_08:36:10 627] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Text Document (4).txt
+[2020-12-28_08:36:10 628] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 5 - D:\test\3.txt
+
+[2020-12-28_08:36:36 081] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Text Document (4).txt
+[2020-12-28_08:36:38 880] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Text Document (4).txt
+[2020-12-28_08:36:38 881] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 5 - D:\test\4.txt
+
+CREATE RTF by explorer no change name
+[2020-12-28_08:37:40 207] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Rich Text Document.rtf
+[2020-12-28_08:37:40 208] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 3 - D:\test\New Rich Text Document.rtf
+
+[2020-12-28_08:38:00 555] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Rich Text Document (2).rtf
+[2020-12-28_08:38:00 557] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 3 - D:\test\New Rich Text Document (2).rtf
+
+CREATE RTF by explorer change name
+[2020-12-28_08:38:47 265] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Rich Text Document (3).rtf
+[2020-12-28_08:38:47 266] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 3 - D:\test\New Rich Text Document (3).rtf
+[2020-12-28_08:38:49 776] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Rich Text Document (3).rtf
+[2020-12-28_08:38:49 777] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 5 - D:\test\1.rtf
+
+[2020-12-28_08:39:09 124] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Rich Text Document (3).rtf
+[2020-12-28_08:39:09 126] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 3 - D:\test\New Rich Text Document (3).rtf
+[2020-12-28_08:39:11 127] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Rich Text Document (3).rtf
+[2020-12-28_08:39:11 128] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 5 - D:\test\2.rtf
+
+
+
+
+SAVE-AS NOTEPAD
+[2020-12-28_08:30:44 507] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 1 - D:\test\1.txt
+[2020-12-28_08:30:44 508] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 2 - D:\test\1.txt
+[2020-12-28_08:30:44 598] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 1 - D:\test\1.txt
+[2020-12-28_08:30:44 600] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 3 - D:\test\1.txt
+
+[2020-12-28_08:31:26 835] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 1 - D:\test\2.txt
+[2020-12-28_08:31:26 837] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 2 - D:\test\2.txt
+[2020-12-28_08:31:26 926] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 1 - D:\test\2.txt
+[2020-12-28_08:31:26 927] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 3 - D:\test\2.txt
+
+
+SAVE-AS WORD
+[2020-12-27_16:11:04 087] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 1 - D:\test\8.docx
+[2020-12-27_16:11:04 089] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 2 - D:\test\8.docx
+[2020-12-27_16:11:04 212] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 1 - D:\test\8.docx
+[2020-12-27_16:11:04 255] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 1 - D:\test\~.tmp
+[2020-12-27_16:11:04 267] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 3 - D:\test\~.tmp
+[2020-12-27_16:11:04 269] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 1 - D:\test\8.docx~RF1994986.TMP
+[2020-12-27_16:11:04 274] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 2 - D:\test\8.docx~RF1994986.TMP
+[2020-12-27_16:11:04 275] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 4 - D:\test\8.docx
+[2020-12-27_16:11:04 277] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 5 - D:\test\8.docx~RF1994986.TMP
+[2020-12-27_16:11:04 280] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 4 - D:\test\~.tmp
+[2020-12-27_16:11:04 282] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 5 - D:\test\8.docx
+[2020-12-27_16:11:04 285] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 2 - D:\test\8.docx~RF1994986.TMP
+
+[2020-12-27_16:12:53 565] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\9.docx
+[2020-12-27_16:12:53 566] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 2 - D:\test\9.docx
+[2020-12-27_16:12:53 716] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\9.docx
+[2020-12-27_16:12:53 739] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\~.tmp
+[2020-12-27_16:12:53 748] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 3 - D:\test\~.tmp
+[2020-12-27_16:12:53 749] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\9.docx~RF19af533.TMP
+[2020-12-27_16:12:53 751] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 2 - D:\test\9.docx~RF19af533.TMP
+[2020-12-27_16:12:53 753] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 4 - D:\test\9.docx
+[2020-12-27_16:12:53 755] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 5 - D:\test\9.docx~RF19af533.TMP
+[2020-12-27_16:12:53 758] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 4 - D:\test\~.tmp
+[2020-12-27_16:12:53 760] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 5 - D:\test\9.docx
+[2020-12-27_16:12:53 764] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 2 - D:\test\9.docx~RF19af533.TMP
+
+
+SAVE WORD
+
+[2020-12-27_16:13:18 561] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\~.tmp
+[2020-12-27_16:13:18 570] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 3 - D:\test\~.tmp
+[2020-12-27_16:13:18 571] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\9.docx~RF19b562f.TMP
+[2020-12-27_16:13:18 572] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 2 - D:\test\9.docx~RF19b562f.TMP
+[2020-12-27_16:13:18 574] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 4 - D:\test\9.docx
+[2020-12-27_16:13:18 575] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 5 - D:\test\9.docx~RF19b562f.TMP
+[2020-12-27_16:13:18 577] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 4 - D:\test\~.tmp
+[2020-12-27_16:13:18 578] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 5 - D:\test\9.docx
+[2020-12-27_16:13:18 579] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 2 - D:\test\9.docx~RF19b562f.TMP
+
+[2020-12-27_16:13:45 937] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\~.tmp
+[2020-12-27_16:13:45 947] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 3 - D:\test\~.tmp
+[2020-12-27_16:13:45 948] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 1 - D:\test\9.docx~RF19bc11e.TMP
+[2020-12-27_16:13:45 950] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 2 - D:\test\9.docx~RF19bc11e.TMP
+[2020-12-27_16:13:45 951] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 4 - D:\test\9.docx
+[2020-12-27_16:13:45 952] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 5 - D:\test\9.docx~RF19bc11e.TMP
+[2020-12-27_16:13:45 954] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 4 - D:\test\~.tmp
+[2020-12-27_16:13:45 955] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 5 - D:\test\9.docx
+[2020-12-27_16:13:45 957] [info] [thread 1424] [died::file_name_watcher::do_notify:12] 2 - D:\test\9.docx~RF19bc11e.TMP
+
+
+DOWNLOAD FILE FROM CHROME 'SAVE-AS'
+[2020-12-27_18:19:06 701] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 1 - D:\test\1.jpg
+[2020-12-27_18:19:06 702] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 2 - D:\test\1.jpg
+[2020-12-27_18:19:06 904] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 1 - D:\test\1.jpg.crdownload
+[2020-12-27_18:19:06 911] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\1.jpg.crdownload
+[2020-12-27_18:19:06 913] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\1.jpg.crdownload
+[2020-12-27_18:19:07 327] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 4 - D:\test\1.jpg.crdownload
+[2020-12-27_18:19:07 328] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 5 - D:\test\1.jpg
+[2020-12-27_18:19:07 827] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\1.jpg
+[2020-12-27_18:19:07 829] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\1.jpg
+
+[2020-12-27_18:20:39 320] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 1 - D:\test\2.pdf
+[2020-12-27_18:20:39 322] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 2 - D:\test\2.pdf
+[2020-12-27_18:20:39 546] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 1 - D:\test\Unconfirmed 140477.crdownload
+[2020-12-27_18:20:39 550] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\Unconfirmed 140477.crdownload
+[2020-12-27_18:20:39 552] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\Unconfirmed 140477.crdownload
+[2020-12-27_18:21:14 360] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\Unconfirmed 140477.crdownload
+[2020-12-27_18:21:14 882] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 4 - D:\test\Unconfirmed 140477.crdownload
+[2020-12-27_18:21:14 884] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 5 - D:\test\2.pdf
+[2020-12-27_18:21:15 111] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\2.pdf
+[2020-12-27_18:21:15 113] [info] [thread 9700] [died::file_name_watcher::do_notify:12] 3 - D:\test\2.pdf
+
+[2020-12-27_20:26:37 185] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 1 - D:\test\3e610cb3-b3cd-4397-ae45-9821bd3cc6ea.tmp
+[2020-12-27_20:26:37 221] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 3 - D:\test\3e610cb3-b3cd-4397-ae45-9821bd3cc6ea.tmp
+[2020-12-27_20:26:39 288] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 1 - D:\test\1 (4).jpg
+[2020-12-27_20:26:39 290] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 2 - D:\test\1 (4).jpg
+[2020-12-27_20:26:39 498] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 4 - D:\test\3e610cb3-b3cd-4397-ae45-9821bd3cc6ea.tmp
+[2020-12-27_20:26:39 501] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 5 - D:\test\1 (4).jpg.crdownload
+[2020-12-27_20:26:39 584] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 4 - D:\test\1 (4).jpg.crdownload
+[2020-12-27_20:26:39 585] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 5 - D:\test\1 (4).jpg
+[2020-12-27_20:26:40 041] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 3 - D:\test\1 (4).jpg
+[2020-12-27_20:26:40 044] [info] [thread 2060] [died::file_name_watcher::do_notify:12] 3 - D:\test\1 (4).jpg
+
+DOWNLOAD FILE FROM CHROME 'AUTO-SAVE'
+[2020-12-27_18:25:31 937] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 1 - D:\test\9be830ee-221a-4a6e-a369-c53ac5a76098.tmp
+[2020-12-27_18:25:31 942] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\9be830ee-221a-4a6e-a369-c53ac5a76098.tmp
+[2020-12-27_18:25:31 959] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 4 - D:\test\9be830ee-221a-4a6e-a369-c53ac5a76098.tmp
+[2020-12-27_18:25:31 961] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 5 - D:\test\image002.jpg.crdownload
+[2020-12-27_18:25:32 034] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\image002.jpg.crdownload
+[2020-12-27_18:25:32 081] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 4 - D:\test\image002.jpg.crdownload
+[2020-12-27_18:25:32 084] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 5 - D:\test\image002.jpg
+[2020-12-27_18:25:32 330] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\image002.jpg
+[2020-12-27_18:25:32 332] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\image002.jpg
+
+[2020-12-27_18:26:08 806] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 1 - D:\test\0b80b240-6f08-4533-925c-d7e0dd920669.tmp
+[2020-12-27_18:26:08 814] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\0b80b240-6f08-4533-925c-d7e0dd920669.tmp
+[2020-12-27_18:26:08 826] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 4 - D:\test\0b80b240-6f08-4533-925c-d7e0dd920669.tmp
+[2020-12-27_18:26:08 828] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 5 - D:\test\image002 (1).jpg.crdownload
+[2020-12-27_18:26:08 841] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\image002 (1).jpg.crdownload
+[2020-12-27_18:26:08 877] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 4 - D:\test\image002 (1).jpg.crdownload
+[2020-12-27_18:26:08 879] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 5 - D:\test\image002 (1).jpg
+[2020-12-27_18:26:09 068] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\image002 (1).jpg
+[2020-12-27_18:26:09 070] [info] [thread 9940] [died::file_name_watcher::do_notify:12] 3 - D:\test\image002 (1).jpg

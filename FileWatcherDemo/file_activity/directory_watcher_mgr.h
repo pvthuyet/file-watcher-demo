@@ -40,6 +40,7 @@ namespace died
 		void checking_move(watching_group& group);
 
 	private:
+		bool is_create_pure(file_notify_info const& info, watching_group& group);
 		bool is_create_by_temporary_round_trip(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
 		bool is_create_by_temporary_one_way(file_notify_info const& info, watching_group& group, std::wstring& middleName, std::wstring& finalName);
 
