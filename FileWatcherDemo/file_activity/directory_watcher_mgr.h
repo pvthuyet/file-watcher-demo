@@ -43,7 +43,7 @@ namespace died
 		bool is_create_pure(file_notify_info const& info, watching_group& group);
 		bool is_create_by_temporary_round_trip(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
 		bool is_create_by_temporary_one_way(file_notify_info const& info, watching_group& group, std::wstring& middleName, std::wstring& finalName);
-		bool is_create_txt_then_change_name(file_notify_info const& info, watching_group& group, std::wstring& realFile);
+		bool is_create_txt_then_rename_name(file_notify_info const& info, watching_group& group, std::wstring& realFile);
 		bool is_create_txt_save_as(file_notify_info const& info, watching_group& group);
 
 		bool is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile);

@@ -54,4 +54,19 @@ namespace died
 	{
 		return mModify;
 	}
+
+	bool file_name_watcher::exist_in_rename_any(std::wstring const& key) const
+	{
+		auto const& ren1 = mRename.find_by_old_name(key);
+		if (ren1) {
+			return true;
+		}
+
+		auto const& ren2 = mRename.find(key);
+		if (ren2) {
+			return true;
+		}
+
+		return false;
+	}
 }

@@ -13,6 +13,7 @@ namespace died
 		model_file_info& get_remove();
 		model_file_info& get_modify();
 		model_rename& get_rename();
+		bool exist_in_rename_any(std::wstring const& key) const;
 
 	private:
 		void do_notify(file_notify_info info) final;
