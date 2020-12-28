@@ -41,15 +41,15 @@ namespace died
 
 	private:
 		bool is_create_pure(file_notify_info const& info, watching_group& group);
-		bool is_create_by_temporary_round_trip(file_notify_info const& info, watching_group& group, std::wstring& tempNewName, std::wstring& tempOldName);
-		bool is_create_by_temporary_one_way(file_notify_info const& info, watching_group& group, std::wstring& middleName, std::wstring& finalName);
+		bool is_create_word_save_as(file_notify_info const& info, watching_group& group, std::wstring& temp1, std::wstring& temp2);
+		bool is_create_brower_auto_save(file_notify_info const& info, watching_group& group, std::wstring& temp, std::wstring& finalName);
 		bool is_create_txt_then_rename_name(file_notify_info const& info, watching_group& group, std::wstring& realFile);
 		bool is_create_txt_save_as(file_notify_info const& info, watching_group& group);
 
 		bool is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile);
 		bool is_create_middle_temporary(file_notify_info const& info, watching_group& group);
 
-		bool is_modify_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& realFile);
+		bool is_modify_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& temp2, std::wstring& realFile);
 
 	private:
 		std::vector<watching_group> mWatchers;

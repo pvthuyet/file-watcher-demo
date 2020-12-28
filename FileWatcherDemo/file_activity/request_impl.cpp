@@ -132,7 +132,6 @@ namespace died
 
 	VOID CALLBACK request_impl::notification_completion(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
 	{
-		LOGENTER;
 		request_impl* pBlock = (request_impl*)lpOverlapped->hEvent;
 		_ASSERTE(pBlock);
 
@@ -168,7 +167,5 @@ namespace died
 
 		// start processing
 		pBlock->process_notification();
-
-		LOGEXIT;
 	}
 }

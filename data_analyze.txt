@@ -1,9 +1,9 @@
-CREATE TXT by explorer no change name => done
+***CREATE TXT by explorer no change name => DONE as CREATE
 [2020-12-28_08:34:41 343] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Text Document (2).txt
 
 [2020-12-28_08:35:19 028] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Text Document (3).txt
 
-CREATE TXT by explorer CHANG NAME
+***CREATE TXT by explorer CHANG NAME => DONE as CREATE
 [2020-12-28_08:36:05 086] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Text Document (4).txt
 [2020-12-28_08:36:10 627] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Text Document (4).txt
 [2020-12-28_08:36:10 628] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 5 - D:\test\3.txt
@@ -12,14 +12,14 @@ CREATE TXT by explorer CHANG NAME
 [2020-12-28_08:36:38 880] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Text Document (4).txt
 [2020-12-28_08:36:38 881] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 5 - D:\test\4.txt
 
-CREATE RTF by explorer no change name
+***CREATE RTF by explorer no rename name => done as COPY
 [2020-12-28_08:37:40 207] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Rich Text Document.rtf
 [2020-12-28_08:37:40 208] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 3 - D:\test\New Rich Text Document.rtf
 
 [2020-12-28_08:38:00 555] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Rich Text Document (2).rtf
 [2020-12-28_08:38:00 557] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 3 - D:\test\New Rich Text Document (2).rtf
 
-CREATE RTF by explorer change name
+***CREATE RTF by explorer rename name => done as MODIFY
 [2020-12-28_08:38:47 265] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 1 - D:\test\New Rich Text Document (3).rtf
 [2020-12-28_08:38:47 266] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 3 - D:\test\New Rich Text Document (3).rtf
 [2020-12-28_08:38:49 776] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Rich Text Document (3).rtf
@@ -30,10 +30,26 @@ CREATE RTF by explorer change name
 [2020-12-28_08:39:11 127] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 4 - D:\test\New Rich Text Document (3).rtf
 [2020-12-28_08:39:11 128] [info] [thread 9356] [died::file_name_watcher::do_notify:12] 5 - D:\test\2.rtf
 
+***CREATE bmp as default
+[2020-12-28_16:20:30 529] [info] [thread 13460] [died::file_name_watcher::do_notify:12] 1 - C:\tmp\New Bitmap Image.bmp
+
+***CREATE bmp then rename
+[2020-12-28_16:21:59 265] [info] [thread 10156] [died::file_name_watcher::do_notify:12] 1 - C:\tmp\New Bitmap Image (2).bmp
+[2020-12-28_16:22:00 373] [info] [thread 10156] [died::file_name_watcher::do_notify:12] 4 - C:\tmp\New Bitmap Image (2).bmp
+[2020-12-28_16:22:00 375] [info] [thread 10156] [died::file_name_watcher::do_notify:12] 5 - C:\tmp\1.bmp
+
+***create zip as default
+[2020-12-28_16:25:55 474] [info] [thread 12880] [died::file_name_watcher::do_notify:12] 1 - C:\tmp\New Compressed (zipped) Folder.zip
+[2020-12-28_16:25:55 477] [info] [thread 12880] [died::file_name_watcher::do_notify:12] 3 - C:\tmp\New Compressed (zipped) Folder.zip
+
+***create zip then rename
+[2020-12-28_16:49:31 917] [info] [thread 13932] [died::file_name_watcher::do_notify:12] 1 - C:\tmp\New Compressed (zipped) Folder (4).zip
+[2020-12-28_16:49:31 920] [info] [thread 13932] [died::file_name_watcher::do_notify:12] 3 - C:\tmp\New Compressed (zipped) Folder (4).zip
+[2020-12-28_16:49:33 219] [info] [thread 13932] [died::file_name_watcher::do_notify:12] 4 - C:\tmp\New Compressed (zipped) Folder (4).zip
+[2020-12-28_16:49:33 220] [info] [thread 13932] [died::file_name_watcher::do_notify:12] 5 - C:\tmp\1.zip
 
 
-
-SAVE-AS NOTEPAD
+***SAVE-AS NOTEPAD => DONE as CREATE
 [2020-12-28_08:30:44 507] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 1 - D:\test\1.txt
 [2020-12-28_08:30:44 508] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 2 - D:\test\1.txt
 [2020-12-28_08:30:44 598] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 1 - D:\test\1.txt
@@ -44,8 +60,25 @@ SAVE-AS NOTEPAD
 [2020-12-28_08:31:26 926] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 1 - D:\test\2.txt
 [2020-12-28_08:31:26 927] [info] [thread 12064] [died::file_name_watcher::do_notify:12] 3 - D:\test\2.txt
 
+***SAVE NOTEPAD => DONE as modify
+[2020-12-28_17:02:14 513] [info] [thread 12044] [died::file_name_watcher::do_notify:12] 3 - C:\tmp\2.txt
 
-SAVE-AS WORD
+***mspaint save-as
+[2020-12-28_17:10:06 010] [info] [thread 15388] [died::file_name_watcher::do_notify:12] 1 - C:\tmp\1.png
+[2020-12-28_17:10:06 011] [info] [thread 15388] [died::file_name_watcher::do_notify:12] 2 - C:\tmp\1.png
+[2020-12-28_17:10:06 200] [info] [thread 15388] [died::file_name_watcher::do_notify:12] 1 - C:\tmp\1.png
+[2020-12-28_17:10:06 259] [info] [thread 15388] [died::file_name_watcher::do_notify:12] 3 - C:\tmp\1.png
+[2020-12-28_17:10:06 260] [info] [thread 15388] [died::file_name_watcher::do_notify:12] 3 - C:\tmp\1.png
+[2020-12-28_17:10:06 261] [info] [thread 15388] [died::file_name_watcher::do_notify:12] 3 - C:\tmp\1.png
+
+***mspaint save
+[2020-12-28_17:13:43 531] [info] [thread 9332] [died::file_name_watcher::do_notify:12] 2 - C:\tmp\1.png
+[2020-12-28_17:13:43 533] [info] [thread 9332] [died::file_name_watcher::do_notify:12] 1 - C:\tmp\1.png
+
+
+
+
+***WORDPAD SAVE-AS .docx
 [2020-12-27_16:11:04 087] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 1 - D:\test\8.docx
 [2020-12-27_16:11:04 089] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 2 - D:\test\8.docx
 [2020-12-27_16:11:04 212] [info] [thread 11560] [died::file_name_watcher::do_notify:12] 1 - D:\test\8.docx

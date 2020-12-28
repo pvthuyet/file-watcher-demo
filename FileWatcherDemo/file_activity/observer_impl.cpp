@@ -41,8 +41,7 @@ namespace died
 	{
 		LOGENTER;
 		while (!empty_request() || !terminated()) {
-			auto retVal = ::SleepEx(INFINITE, TRUE);
-			SPDLOG_DEBUG("SleepEx state: {}, number request: {}, terminated: {}", retVal, empty_request(), terminated());
+			::SleepEx(INFINITE, TRUE);
 		}
 		LOGEXIT;
 	}
