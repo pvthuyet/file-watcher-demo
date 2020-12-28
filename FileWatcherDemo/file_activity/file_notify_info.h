@@ -11,7 +11,7 @@ namespace died
 		file_notify_info() = default;
 		
 		template<typename StringAble> 
-		file_notify_info(StringAble&& s, unsigned long action = 0ul, unsigned long size = 0ul);
+		explicit file_notify_info(StringAble&& s, unsigned long action = 0ul, unsigned long size = 0ul);
 
 		explicit operator bool() const noexcept;
 

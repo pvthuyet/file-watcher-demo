@@ -3,7 +3,7 @@
 
 #pragma once
 
-#if  __has_include(<filesystem>)
+#if __has_include(<filesystem>)
 #include <filesystem>
 #else
 // We haven't checked which filesystem to include yet

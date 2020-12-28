@@ -88,7 +88,7 @@ namespace died
 			checking_security(el);
 			checking_folder_name(el);
 			checking_rename(el);
-			checking_create(el);
+			//checking_create(el);
 			checking_remove(el);
 			checking_modify(el);
 			checking_modify_without_modify_event(el);
@@ -297,6 +297,7 @@ namespace died
 			return;
 		}
 
+		// **case 1: pure creation
 		if (is_create_pure(info, group)) {
 			SPDLOG_INFO(L"Create pure {}", key);
 			erase_all(group, key);
@@ -304,7 +305,7 @@ namespace died
 			return;
 		}
 
-		//** case 1: create file by temporary
+		//** case 2: create file by temporary
 		// happen when save-as word, excel, etc
 		std::wstring tempNewName, tempOldName;
 		if (is_create_by_temporary_round_trip(info, group, tempNewName, tempOldName)) {
@@ -330,14 +331,14 @@ namespace died
 			return;
 		}
 
-		// case 2: modify by temporary file
+		// case 3: modify by temporary file
 		std::wstring realFile;
 		if (is_create_temporary_for_modify(info, group, realFile)) {
 			// will process in checking_modify
 			return;
 		}
 
-		// middle temporary file
+		// case 4: middle temporary file
 		if (is_create_middle_temporary(info, group)) {
 			// No report to server
 			SPDLOG_INFO(L"Create middle temporary file {}", key);
@@ -347,58 +348,26 @@ namespace died
 			return;
 		}
 
-
-
-
-
-
-
-
-
-		auto const& rmv = group.mFileName.get_remove().find(key);
-		auto const& modi = group.mFileName.get_modify().find(key);
-		bool rmValid = static_cast<bool>(rmv);
-		bool mdValid = static_cast<bool>(modi);
-
-		// **case 1: both 'rmv' and 'modi' are valid
-		// => This is creation by 'save-as'
-		if (rmValid && mdValid) {
-			SPDLOG_INFO(L"Create: {}", key);
+		// case 5: create txt file then change name
+		// this case doesn't exist modify
+		std::wstring realFileCreateChange;
+		if (is_create_txt_then_change_name(info, group, realFileCreateChange)) {
+			SPDLOG_INFO(L"Create txt file then change name {}", realFileCreateChange);
 			erase_all(group, key);
-			// jump to next item for next step
+			erase_all(group, realFileCreateChange);
+			erase_rename(group, realFileCreateChange);
 			model.next_available_item();
 			return;
 		}
 
-		// Both 'rmv' and 'modi' are invalid
-		if (!rmValid && !mdValid) {
-
-			// **case 3: 'filename' should not exist in any 'remove model' of other groups
-			// this happen when move file
-			// receive: add, delete (in the same disk)
-			// reveive: add, delete, modify (different disk)
-			std::wstring filename = info.get_file_name_wstring();
-			for (auto& w : mWatchers) {
-				auto const& found = w.mFileName.get_remove().find_if([&filename](auto const& item) {
-					return filename == item.get_file_name_wstring();
-				});
-
-				// this is not creation, lets other function checking this item
-				if (found) {
-					return;
-				}
-			}
-
-			// **case 4: This is 100% creation
-			SPDLOG_INFO(L"Create: {}", key);
+		// case 6: save-as notepad
+		if (is_create_txt_save_as(info, group)) {
+			SPDLOG_INFO(L"Create txt save-as", key);
 			erase_all(group, key);
-			// jump to next item for next step
 			model.next_available_item();
 			return;
 		}
 
-		// **otherwise: ignore this item
-		// Lets other functions checking this item
 	}
 
 	void directory_watcher_mgr::checking_remove(watching_group& group)
@@ -581,6 +550,25 @@ namespace died
 			return;
 		}
 
+		// case 5: create notepad file then change name
+		// this case doesn't exist modify
+		std::wstring realFileCreateChange;
+		if (is_create_txt_then_change_name(info, group, realFileCreateChange)) {
+			// will process in creation
+			return;
+		}
+
+		// case 6: save-as notepad
+		if (is_create_txt_save_as(info, group)) {
+			// will process in creation
+			return;
+		}
+
+
+
+
+
+
 		// **case 1: Modify case
 		// receive: remove, add and not 'modify'
 		// 'remove' must before 'add'
@@ -659,6 +647,25 @@ namespace died
 			// will process in creation
 			return;
 		}
+
+		// case 5: create notepad file then change name
+		// this case doesn't exist modify
+		std::wstring realFileCreateChange;
+		if (is_create_txt_then_change_name(info, group, realFileCreateChange)) {
+			// will process in creation
+			return;
+		}
+
+		// case 6: save-as notepad
+		if (is_create_txt_save_as(info, group)) {
+			// will process in creation
+			return;
+		}
+
+
+
+
+
 
 		// ** Goal copy: 
 		// exist in 'modify' 
@@ -757,6 +764,24 @@ namespace died
 			return;
 		}
 
+		// case 5: create notepad file then change name
+		// this case doesn't exist modify
+		std::wstring realFileCreateChange;
+		if (is_create_txt_then_change_name(info, group, realFileCreateChange)) {
+			// will process in creation
+			return;
+		}
+
+		// case 6: save-as notepad
+		if (is_create_txt_save_as(info, group)) {
+			// will process in creation
+			return;
+		}
+
+
+
+
+
 		// **Goal move
 		// exist in modify
 		// exist in remove but other path
@@ -789,7 +814,7 @@ namespace died
 	{
 		// **behaviour
 		// step 1. create 1.txt
-		// should not exist in others
+		// should not exist in others: remove, modify rename
 		auto key = info.get_path_wstring();
 
 		auto const& rmv = group.mFileName.get_remove().find(key);
@@ -802,9 +827,30 @@ namespace died
 			return false;
 		}
 
-		auto const& ren = group.mFileName.get_rename().find(key);
-		if (ren) {
+		auto const& ren1 = group.mFileName.get_rename().find_by_old_name(key);
+		if (ren1) {
 			return false;
+		}
+
+		auto const& ren2 = group.mFileName.get_rename().find(key);
+		if (ren2) {
+			return false;
+		}
+
+		// Make sure this is not move action
+		// this happen when move file
+		// receive: add, delete (in the same disk)
+		// reveive: add, delete, modify (different disk)
+		std::wstring filename = info.get_file_name_wstring();
+		for (auto& w : mWatchers) {
+			auto const& found = w.mFileName.get_remove().find_if([&filename](auto const& item) {
+				return filename == item.get_file_name_wstring();
+			});
+
+			// this is not creation, lets other function checking this item
+			if (found) {
+				return false;
+			}
 		}
 
 		return true;
@@ -833,7 +879,7 @@ namespace died
 		}
 
 		// checking the time
-		std::chrono::duration<double> diff = ren2.mNewName.get_created_time() - ren1.mNewName.get_created_time();
+		std::chrono::duration<double> diff = ren1.mNewName.get_created_time() - ren2.mNewName.get_created_time();
 		if (diff.count() < 0) {
 			return false;
 		}
@@ -903,6 +949,96 @@ namespace died
 		return true;
 	}
 
+	bool directory_watcher_mgr::is_create_txt_then_change_name(file_notify_info const& info, watching_group& group, std::wstring& realFile)
+	{
+		// **behaviour
+		// step 1. create New Text Document.txt
+		// step 2. rename New Text Document.txt => 1.txt
+
+		// Strong condition
+		// cond 1: New Text Document.txt should not exist in 'modify'
+		// cond 2: 1.txt should not exist in 'modify', 'remove', 'rename' old name
+		auto key = info.get_path_wstring();
+
+		// step 2
+		auto const& ren1 = group.mFileName.get_rename().find_by_old_name(key);
+		if (!ren1) {
+			return false;
+		}
+		std::chrono::duration<double> diff = ren1.mOldName.get_created_time() - info.get_created_time();
+		if (diff.count() < 0) {
+			return false;
+		}
+
+		// cond 1
+		auto const& modi1 = group.mFileName.get_modify().find(key);
+		if (modi1) {
+			return false;
+		}
+
+		// Cond 2: verify realFile
+		realFile = ren1.mNewName.get_path_wstring();
+		auto const& modi2 = group.mFileName.get_modify().find(realFile);
+		if (modi2) {
+			return false;
+		}
+
+		auto const& rmv = group.mFileName.get_remove().find(realFile);
+		if (rmv) {
+			return false;
+		}
+
+		auto const& ren2 = group.mFileName.get_rename().find_by_old_name(realFile);
+		if (ren2) {
+			return false;
+		}
+		return true;
+	}
+
+	bool directory_watcher_mgr::is_create_txt_save_as(file_notify_info const& info, watching_group& group)
+	{
+		// **behaviour
+		// step 1. create 1.txt
+		// step 2. remove 1.txt
+		// step 3. create 1.txt
+		// step 4. modify 1.txt
+		
+		// Strong condition
+		// 1.txt should not exist in rename, 
+		auto key = info.get_path_wstring();
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (!rmv) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff1 = info.get_created_time() - rmv.get_created_time();
+		if (diff1.count() < 0) {
+			return false;
+		}
+
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (!modi) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff2 = modi.get_created_time() - info.get_created_time();
+		if (diff2.count() < 0) {
+			return false;
+		}
+
+		auto const& ren1 = group.mFileName.get_rename().find_by_old_name(key);
+		if (ren1) {
+			return false;
+		}
+
+		auto const& ren2 = group.mFileName.get_rename().find(key);
+		if (ren2) {
+			return false;
+		}
+
+		return true;
+	}
+
 	bool directory_watcher_mgr::is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile)
 	{
 		// **behaviour
@@ -933,7 +1069,7 @@ namespace died
 			return false;
 		}
 
-		realFile = ren1.mNewName.get_path_wstring();
+		realFile = ren1.mNewName.get_path_wstring(); // 1.docx
 
 		// step 4: very file realFile
 		auto const& ren2 = group.mFileName.get_rename().find_by_old_name(realFile);

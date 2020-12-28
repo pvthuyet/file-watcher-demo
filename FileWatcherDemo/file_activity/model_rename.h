@@ -21,7 +21,7 @@ namespace died
 
 	class model_rename
 	{
-		using rename_map = died::circle_map<std::wstring, rename_notify_info, 32u>;
+		using rename_map = died::circle_map<std::wstring, rename_notify_info, 8u>;
 	public:
 		void push(file_notify_info&& info);
 		const rename_notify_info& front() const;
