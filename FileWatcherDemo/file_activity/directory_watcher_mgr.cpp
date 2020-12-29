@@ -297,84 +297,112 @@ namespace died
 			return;
 		}
 
-		// **case 1: pure creation
-		if (is_create_pure(info, group)) {
-			SPDLOG_INFO(L"Create pure {}", key);
+		// **case 1: dont interest in file that exist in rename
+		// happen when save, save-as word
+		if (group.mFileName.exist_in_rename_any(key)) {
+			// will be processed in rename
+			model.next_available_item();
+			return;
+		}
+
+		// **case 2: temporary file
+		// happen when download big file by save-as
+		// will create -> remove -> waiting to rename
+		if (is_temporary_file(info, group)) {
+			// will be processed later in rename
+			model.next_available_item();
+			return;
+		}
+
+		// **case 3: save-as .txt by notepad
+		if (is_save_as_txt(info, group)) {
+			SPDLOG_INFO(L"Create save-as txt {}", key);
 			erase_all(group, key);
 			model.next_available_item();
 			return;
 		}
 
-		//** case 2: create file by temporary
-		// happen when save-as word, excel, etc
-		std::wstring temp1, temp2;
-		if (is_create_word_save_as(info, group, temp1, temp2)) {
-			SPDLOG_INFO(L"Create word save-as {} - {} - {}", key, temp1, temp2);
-			erase_all(group, key);
-			erase_all(group, temp1);
-			erase_all(group, temp2);
-			erase_rename(group, key);
-			erase_rename(group, temp1);
-			erase_rename(group, temp2);
-			model.next_available_item();
-			return;
-		}
-
-		//** case 3: Create 2 temporary file
-		// happen when download chrome auto-save
-		std::wstring finalName, temp3;
-		if (is_create_brower_auto_save(info, group, temp3, finalName)) {
-			SPDLOG_INFO(L"Create brower auto-save {} - {} - {}", finalName, key, temp3);
-			erase_all(group, key);
-			erase_all(group, temp3);
-			erase_all(group, finalName);
-			erase_rename(group, key);
-			erase_rename(group, temp3);
-			erase_rename(group, finalName);
-			model.next_available_item();
-			return;
-		}
-
-		//** case 4: modify by temporary file
-		// happen when save word
-		std::wstring realFile;
-		if (is_create_temporary_for_modify(info, group, realFile)) {
-			// will process in checking_modify
-			return;
-		}
-
-		//** case 5: middle temporary file
-		// happen when download chrome save-as
-		if (is_create_middle_temporary(info, group)) {
-			// No report to server
-			SPDLOG_INFO(L"Create middle temporary file {}", key);
-			erase_all(group, key);
-			erase_rename(group, key);
-			model.next_available_item();
-			return;
-		}
-
-		//** case 6 create txt file then rename
-		// happen when create txt file by explore then rename
-		// this case doesn't exist modify
-		std::wstring realFileCreateChange;
-		if (is_create_txt_then_rename_name(info, group, realFileCreateChange)) {
-			SPDLOG_INFO(L"Create txt file then rename name {}", realFileCreateChange);
-			erase_all(group, key);
-			erase_all(group, realFileCreateChange);
-			erase_rename(group, realFileCreateChange);
-			model.next_available_item();
-			return;
-		}
-
-		//** case 7: save-as notepad
-		// happen when save-as notepad
-		if (is_create_txt_save_as(info, group)) {
-			SPDLOG_INFO(L"Create txt save-as", key);
+		// **case 4: only create
+		if (is_create_only_2(info, group)) {
+			SPDLOG_INFO(L"Create only {}", key);
 			erase_all(group, key);
 			model.next_available_item();
 			return;
 		}
+	}
+
+	bool directory_watcher_mgr::is_temporary_file(file_notify_info const& info, watching_group& group)
+	{
+		// happen when download big file by save-as
+		// will create -> remove -> waiting to rename
+		auto key = info.get_path_wstring();
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
+		if (diff.count() > 0) {
+			return false;
+		}
+		return true;
+	}
+
+	bool directory_watcher_mgr::is_save_as_txt(file_notify_info const& info, watching_group& group)
+	{
+		auto key = info.get_path_wstring();
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (!rmv) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff1 = info.get_created_time() - rmv.get_created_time();
+		if (diff1.count() < 0) {
+			return false;
+		}
+
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (!modi) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff2 = modi.get_created_time() - info.get_created_time();
+		if (diff2.count() < 0) {
+			return false;
+		}
+		return true;
+	}
+
+	bool directory_watcher_mgr::is_create_only_2(file_notify_info const& info, watching_group& group)
+	{
+		// **behaviour
+		// step 1. create 1.txt
+		// should not exist in others: remove, modify rename
+		auto key = info.get_path_wstring();
+
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (rmv) {
+			return false;
+		}
+
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (modi) {
+			return false;
+		}
+
+		// Make sure this is not move action
+		// this happen when move file
+		// receive: add, delete (in the same disk)
+		// reveive: add, delete, modify (different disk)
+		for (auto& w : mWatchers) {
+			auto const& found = w.mFileName.get_remove().find_if([&info](auto const& item) {
+				return info.get_file_name_wstring() == item.get_file_name_wstring()
+					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
+				});
+
+			// this is not creation, lets other function checking this item
+			if (found) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	void directory_watcher_mgr::checking_remove(watching_group& group)
@@ -407,8 +435,8 @@ namespace died
 
 		// Case 2: should not exist in add
 		// happen when edit image file
-		auto const& addInfo = group.mFileName.get_add().find(key);
-		if (addInfo) {
+		auto const& add = group.mFileName.get_add().find(key);
+		if (add) {
 			model.next_available_item();
 			return;
 		}
@@ -430,7 +458,7 @@ namespace died
 			}
 		}
 
-		// Otherwise this is remove action
+		// 100% only remove
 		SPDLOG_INFO(L"Remove: {}", key);
 		model.erase(key);
 		model.next_available_item();
@@ -462,43 +490,24 @@ namespace died
 			return;
 		}
 
-		// Happen when save word
-		std::wstring temp2;
-		std::wstring realFile;
-		if (is_modify_by_temporary(info, group, temp2, realFile)) {
-			SPDLOG_INFO(L"Modify by 2 temporary files: {} - {} - {}", realFile, key, temp2);
-			erase_all(group, key);
-			erase_all(group, temp2);
-			erase_all(group, realFile);
-			erase_rename(group, temp2);
-			erase_rename(group, realFile);
+		// **case 1: should not exist in rename
+		// happen when save, save-as word
+		if (group.mFileName.exist_in_rename_any(key)) {
+			// will be processed in rename
 			model.next_available_item();
 			return;
 		}
 
-		// happen when download chrome save-as
-		// middle temporary file
-		if (is_create_middle_temporary(info, group)) {
-			// will process in creation
-			model.next_available_item();
-			return;
-		}
-
-		//** case: pure modify
+		// **case 2: not exist in add
 		auto const& add = group.mFileName.get_add().find(key);
 		if (add) {
 			model.next_available_item();
 			return;
 		}
 
+		// **case 3: not exist in remove
 		auto const& rmv = group.mFileName.get_remove().find(key);
 		if (rmv) {
-			model.next_available_item();
-			return;
-		}
-
-		// should not exist in rename
-		if (group.mFileName.exist_in_rename_any(key)) {
 			model.next_available_item();
 			return;
 		}
@@ -537,68 +546,44 @@ namespace died
 			return;
 		}
 
-		// **Case 1: create pure
-		if (is_create_pure(info, group)) {
-			// will be process in creation
-			return;
-		}
-
 		// Make sure not exist in modify
 		auto const& modi = group.mFileName.get_modify().find(key);
 		if (modi) {
 			return;
 		}
 
-		// **case 1: create temporary file
-		// happen when save-as word, excel, etc
-		std::wstring temp1, temp2;
-		if (is_create_word_save_as(info, group, temp1, temp2)) {
-			// will process in creation
+		// **case 1: should not exist in rename
+		// happen when save, save-as word
+		if (group.mFileName.exist_in_rename_any(key)) {
+			// will be processed in rename
+			model.next_available_item();
 			return;
 		}
 
-		// **case 2: happen when download chrome auto-save
-		std::wstring temp3, finalName;
-		if (is_create_brower_auto_save(info, group, temp3, finalName)) {
-			// will process in creation
+		// **case 2: temporary file
+		// happen when download big file by save-as
+		// will create -> remove -> waiting to rename
+		if (is_temporary_file(info, group)) {
+			// will be processed later in rename
+			model.next_available_item();
 			return;
 		}
 
-		// **case 3: happen when save word
-		std::wstring realFile;
-		if (is_create_temporary_for_modify(info, group, realFile)) {
-			// will be processs in modify
+		// **case 3: save-as .txt by notepad
+		if (is_save_as_txt(info, group)) {
+			// process in create
 			return;
 		}
 
-		// **case 4: happen when download chrome save-as
-		// middle temporary file
-		if (is_create_middle_temporary(info, group)) {
-			// will process in creation
+		// **case 4: only create
+		if (is_create_only_2(info, group)) {
+			// process in create
 			return;
 		}
 
-		// case 5: create notepad file then change name
-		// happen when create txt file by explore then rename
-		// this case doesn't exist modify
-		std::wstring realFileCreateChange;
-		if (is_create_txt_then_rename_name(info, group, realFileCreateChange)) {
-			// will process in creation
-			return;
-		}
-
-		// case 6: save-as notepad
-		// happen when save-as notepad
-		if (is_create_txt_save_as(info, group)) {
-			// will process in creation
-			return;
-		}
-
-		// **case 7: modify
+		// **case 5: modify
 		// Happen when edit image files
-		// receive: remove, add
-		// 'remove' must before 'add'
-		// should not exist in rename
+		// receive: remove -> add
 		auto const& rmv = group.mFileName.get_remove().find(key);
 		if (!rmv) {
 			return;
@@ -606,10 +591,6 @@ namespace died
 
 		std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
 		if (diff.count() < 0) {
-			return;
-		}
-
-		if (group.mFileName.exist_in_rename_any(key)) {
 			return;
 		}
 
@@ -648,54 +629,32 @@ namespace died
 			return;
 		}
 
-		// **Case 1: create pure
-		if (is_create_pure(info, group)) {
-			// will be process in creation
+		// **case 1: should not exist in rename
+		// happen when save, save-as word
+		if (group.mFileName.exist_in_rename_any(key)) {
+			// will be processed in rename
+			model.next_available_item();
 			return;
 		}
 
-		// **case 2: create temporary file
-		// happen when save-as word, excel, etc
-		std::wstring temp1, temp2;
-		if (is_create_word_save_as(info, group, temp1, temp2)) {
-			// will process in creation
+		// **case 2: temporary file
+		// happen when download big file by save-as
+		// will create -> remove -> waiting to rename
+		if (is_temporary_file(info, group)) {
+			// will be processed later in rename
+			model.next_available_item();
 			return;
 		}
 
-		// **case 3: happen when download chrome auto-save
-		std::wstring temp3, finalName;
-		if (is_create_brower_auto_save(info, group, temp3, finalName)) {
-			// will process in creation
+		// **case 3: save-as .txt by notepad
+		if (is_save_as_txt(info, group)) {
+			// process in create
 			return;
 		}
 
-		// **case 4: happen when save word
-		std::wstring realFile;
-		if (is_create_temporary_for_modify(info, group, realFile)) {
-			// will be processs in modify
-			return;
-		}
-
-		// **case 5: happen when download chrome save-as
-		// middle temporary file
-		if (is_create_middle_temporary(info, group)) {
-			// will process in creation
-			return;
-		}
-
-		// happen when create txt file by explore then rename
-		// **case 6: create notepad file then rename name
-		// this case doesn't exist modify
-		std::wstring realFileCreateChange;
-		if (is_create_txt_then_rename_name(info, group, realFileCreateChange)) {
-			// will process in creation
-			return;
-		}
-
-		// happen when save-as notepad
-		// case 6: save-as notepad
-		if (is_create_txt_save_as(info, group)) {
-			// will process in creation
+		// **case 4: only create
+		if (is_create_only_2(info, group)) {
+			// process in create
 			return;
 		}
 
@@ -713,10 +672,6 @@ namespace died
 		if (rmv) {
 			// Not action copy
 			// lets other function checking this item
-			return;
-		}
-
-		if (group.mFileName.exist_in_rename_any(key)) {
 			return;
 		}
 
@@ -769,70 +724,41 @@ namespace died
 			return;
 		}
 
-		// **Case 1: create pure
-		if (is_create_pure(info, group)) {
-			// will be process in creation
+		// **case 1: should not exist in rename
+		// happen when save, save-as word
+		if (group.mFileName.exist_in_rename_any(key)) {
+			// will be processed in rename
+			model.next_available_item();
 			return;
 		}
 
-		// **case 2: create temporary file
-		// happen when save-as word, excel, etc
-		std::wstring temp1, temp2;
-		if (is_create_word_save_as(info, group, temp1, temp2)) {
-			// will process in creation
+		// **case 2: temporary file
+		// happen when download big file by save-as
+		// will create -> remove -> waiting to rename
+		if (is_temporary_file(info, group)) {
+			// will be processed later in rename
+			model.next_available_item();
 			return;
 		}
 
-		// **case 3: happen when download chrome auto-save
-		std::wstring temp3, finalName;
-		if (is_create_brower_auto_save(info, group, temp3, finalName)) {
-			// will process in creation
+		// **case 3: save-as .txt by notepad
+		if (is_save_as_txt(info, group)) {
+			// process in create
 			return;
 		}
 
-		// **case 4: happen when save word
-		std::wstring realFile;
-		if (is_create_temporary_for_modify(info, group, realFile)) {
-			// will be processs in modify
-			return;
-		}
-
-		// **case 5: happen when download chrome save-as
-		// middle temporary file
-		if (is_create_middle_temporary(info, group)) {
-			// will process in creation
-			return;
-		}
-
-		// case 6: create notepad file then change name
-		// happen when create txt file by explore then rename
-		// this case doesn't exist modify
-		std::wstring realFileCreateChange;
-		if (is_create_txt_then_rename_name(info, group, realFileCreateChange)) {
-			// will process in creation
-			return;
-		}
-
-		// **case 7: happen when save-as notepad
-		// case 6: save-as notepad
-		if (is_create_txt_save_as(info, group)) {
-			// will process in creation
+		// **case 4: only create
+		if (is_create_only_2(info, group)) {
+			// process in create
 			return;
 		}
 
 		// **Goal move
-		// exist in modify
 		// exist in remove but other path
 		// NOT exist in rename
 
 		auto const& rmv = group.mFileName.get_remove().find(key);
 		if (rmv) {
-			// this is not MOVE
-			// lets other function checking this item
-			return;
-		}
-
-		if (group.mFileName.exist_in_rename_any(key)) {
 			// this is not MOVE
 			// lets other function checking this item
 			return;
@@ -856,7 +782,7 @@ namespace died
 		}
 	}
 
-	bool directory_watcher_mgr::is_create_pure(file_notify_info const& info, watching_group& group)
+	bool directory_watcher_mgr::is_create_only(file_notify_info const& info, watching_group& group)
 	{
 		// **behaviour
 		// step 1. create 1.txt
