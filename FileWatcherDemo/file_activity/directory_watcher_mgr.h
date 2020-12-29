@@ -43,22 +43,12 @@ namespace died
 	private:
 		bool is_rename_only(rename_notify_info const& info, watching_group& group);
 		bool is_rename_one_time(rename_notify_info const& info, watching_group& group);
-
+		bool is_rename_download_auto_save(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2);
+		bool is_rename_word_save_as(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2);
+		bool is_rename_word_save(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2);
 		bool is_temporary_file(file_notify_info const& info, watching_group& group);
 		bool is_save_as_txt(file_notify_info const& info, watching_group& group);
 		bool is_create_only_2(file_notify_info const& info, watching_group& group);
-
-
-		bool is_create_only(file_notify_info const& info, watching_group& group);
-		bool is_create_word_save_as(file_notify_info const& info, watching_group& group, std::wstring& temp1, std::wstring& temp2);
-		bool is_create_brower_auto_save(file_notify_info const& info, watching_group& group, std::wstring& temp, std::wstring& finalName);
-		bool is_create_txt_then_rename_name(file_notify_info const& info, watching_group& group, std::wstring& realFile);
-		bool is_create_txt_save_as(file_notify_info const& info, watching_group& group);
-
-		bool is_create_temporary_for_modify(file_notify_info const& info, watching_group& group, std::wstring& realFile);
-		bool is_create_middle_temporary(file_notify_info const& info, watching_group& group);
-
-		bool is_modify_by_temporary(file_notify_info const& info, watching_group& group, std::wstring& temp2, std::wstring& realFile);
 
 	private:
 		std::vector<watching_group> mWatchers;

@@ -40,7 +40,7 @@ namespace died
 		return drives;
 	}
 
-	bool fileIsProcessing(const std::wstring& filePath)
+	bool fileIsProcessing(const std::wstring& filePath, int& error)
 	{
 		//++ TODO use scoped handle
 		HANDLE hFile = ::CreateFileW(filePath.c_str(),
@@ -51,7 +51,7 @@ namespace died
 			FILE_ATTRIBUTE_NORMAL,
 			(HANDLE)NULL);
 
-		auto error = ::GetLastError();
+		error = ::GetLastError();
 		if (INVALID_HANDLE_VALUE == hFile) {
 			return ERROR_SHARING_VIOLATION == error;
 		}
