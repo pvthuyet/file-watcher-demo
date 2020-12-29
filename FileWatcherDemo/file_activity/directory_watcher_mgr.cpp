@@ -86,7 +86,8 @@ namespace died
 		for (auto& el : mWatchers) {
 			checking_attribute(el);
 			checking_security(el);
-			checking_folder_name(el);
+			checking_folder_remove(el);
+			checking_folder_move(el);
 			checking_rename(el);
 			checking_create(el);
 			checking_remove(el);
@@ -214,9 +215,9 @@ namespace died
 		model.next_available_item();
 	}
 
-	void directory_watcher_mgr::checking_folder_name(watching_group& group) 
+	void directory_watcher_mgr::checking_folder_remove(watching_group& group) 
 	{
-		auto& model = group.mFolderName.get_model();
+		auto& model = group.mFolderName.get_remove();
 		auto const& info = model.front();
 
 		//1. Invlid item => should jump to next one for next step
@@ -230,16 +231,75 @@ namespace died
 			return;
 		}
 
-		//++ TODO filter
-		//...
+		// get key
+		auto key = info.get_path_wstring();
 
-		// 4. notify this item
-		SPDLOG_INFO(L"{}", info.get_path_wstring());
+		// Make sure this is not move
+		// receive: add, delete (in the same disk)
+		// reveive: add, delete, modify (different disk)
+		for (auto& w : mWatchers) {
+			auto const& found = w.mFolderName.get_add().find_if([&info](auto const& item) {
+				return info.get_file_name_wstring() == item.get_file_name_wstring()
+					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
+			});
 
-		// 5. erase processed item
-		model.erase(info.get_path_wstring());
+			// this is move action will process in folder move
+			if (found) {
+				model.next_available_item();
+				return;
+			}
+		}
 
-		// 6. jump to next item for next step
+		// 100% only remove
+		mSender.send(L"Folder remove", key);
+		model.erase(key);
+		model.next_available_item();
+	}
+
+	void directory_watcher_mgr::checking_folder_move(watching_group& group)
+	{
+		// get model
+		auto& model = group.mFolderName.get_add();
+
+		// pop item
+		auto const& info = model.front();
+
+		//1. Invlid item => should jump to next one for next step
+		if (!info) {
+			model.next_available_item();
+			return;
+		}
+
+		// 2. Valid item but need delay
+		if (DELAY_PROCESS > info.alive()) {
+			return;
+		}
+
+		// get key
+		auto key = info.get_path_wstring();
+
+		// **Goal move
+		// exist in remove but other path
+		// Should exist filename in other path
+		for (auto& w : mWatchers) {
+			auto const& found = w.mFolderName.get_remove().find_if([&info](auto const& item) {
+				return info.get_file_name_wstring() == item.get_file_name_wstring()
+					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
+			});
+
+			// The parent path must differnt
+			// 100% MOVE
+			if (found) {
+				mSender.send(L"Folder move", found.get_path_wstring() + L", " + key);
+				model.erase(key);
+				w.mFolderName.get_remove().erase(found.get_path_wstring());
+				model.next_available_item();
+				return;
+			}
+		}
+
+		// If not move should erase of out data
+		model.erase(key);
 		model.next_available_item();
 	}
 
@@ -400,7 +460,7 @@ namespace died
 		}
 
 		// **case 4: only create
-		if (is_create_only_2(info, group)) {
+		if (is_create_only(info, group)) {
 			mSender.send(L"Create only", key);
 			erase_all(group, key);
 			model.next_available_item();
@@ -581,7 +641,7 @@ namespace died
 		}
 
 		// **case 4: only create
-		if (is_create_only_2(info, group)) {
+		if (is_create_only(info, group)) {
 			// process in create
 			return;
 		}
@@ -659,7 +719,7 @@ namespace died
 		}
 
 		// **case 4: only create
-		if (is_create_only_2(info, group)) {
+		if (is_create_only(info, group)) {
 			// process in create
 			return;
 		}
@@ -755,7 +815,7 @@ namespace died
 		}
 
 		// **case 4: only create
-		if (is_create_only_2(info, group)) {
+		if (is_create_only(info, group)) {
 			// process in create
 			return;
 		}
@@ -784,6 +844,7 @@ namespace died
 				mSender.send(L"Move", found.get_path_wstring() + L", " + key);
 				erase_all(group, key);
 				w.mFileName.get_remove().erase(found.get_path_wstring());
+				model.next_available_item();
 				return;
 			}
 		}
@@ -981,7 +1042,7 @@ namespace died
 		return true;
 	}
 
-	bool directory_watcher_mgr::is_create_only_2(file_notify_info const& info, watching_group& group)
+	bool directory_watcher_mgr::is_create_only(file_notify_info const& info, watching_group& group)
 	{
 		// **behaviour
 		// step 1. create 1.txt

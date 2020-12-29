@@ -31,7 +31,8 @@ namespace died
 
 		void checking_attribute(watching_group& group);
 		void checking_security(watching_group& group);
-		void checking_folder_name(watching_group& group);
+		void checking_folder_remove(watching_group& group);
+		void checking_folder_move(watching_group& group);
 		void checking_rename(watching_group& group);
 		void checking_create(watching_group& group);
 		void checking_remove(watching_group& group);
@@ -48,7 +49,7 @@ namespace died
 		bool is_rename_word_save(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2);
 		bool is_temporary_file(file_notify_info const& info, watching_group& group);
 		bool is_save_as_txt(file_notify_info const& info, watching_group& group);
-		bool is_create_only_2(file_notify_info const& info, watching_group& group);
+		bool is_create_only(file_notify_info const& info, watching_group& group);
 
 	private:
 		std::vector<watching_group> mWatchers;
