@@ -41,6 +41,9 @@ namespace died
 		void checking_move(watching_group& group);
 
 	private:
+		bool is_rename_only(rename_notify_info const& info, watching_group& group);
+		bool is_rename_one_time(rename_notify_info const& info, watching_group& group);
+
 		bool is_temporary_file(file_notify_info const& info, watching_group& group);
 		bool is_save_as_txt(file_notify_info const& info, watching_group& group);
 		bool is_create_only_2(file_notify_info const& info, watching_group& group);

@@ -215,6 +215,7 @@ namespace died
 
 		// 2. Valid item but need delay
 		if (DELAY_PROCESS > info.mNewName.alive()) {
+			// Waiting on this file
 			return;
 		}
 
@@ -224,49 +225,80 @@ namespace died
 		auto oldName = info.mOldName.get_path_wstring();
 		auto newName = info.mNewName.get_path_wstring();
 
-		// 3. checking in add
-		auto const& addOld = group.mFileName.get_add().find(oldName);
-		if (addOld) {
+		// 3. file is processing => ignore this file, jump to next one
+		if (died::fileIsProcessing(newName)) {
+			// Waiting on this file
+			return;
+		}
+
+		// **case 1: only rename action
+		// happen when rename a file
+		if (is_rename_only(info, group)) {
+			mSender.send(L"Rename only", oldName + L", " + newName);
+			erase_rename(group, newName);
 			model.next_available_item();
 			return;
 		}
 
-		auto const& addNew = group.mFileName.get_add().find(newName);
-		if (addNew) {
-			model.next_available_item();
-			return;
+		// **case 2: rename 1 time
+		// happen when create a file by explore then rename
+		// consider as create file
+		if (is_rename_one_time(info, group)) {
+			mSender.send(L"Create then rename", oldName + L", " + newName);
+			erase_all(group, oldName);
+			erase_all(group, newName);
+			erase_rename(group, newName);
+		}
+	}
+
+	bool directory_watcher_mgr::is_rename_only(rename_notify_info const& info, watching_group& group)
+	{
+		// oldName and newName should not exist in add
+		auto const& addModel = group.mFileName.get_add();
+		if (addModel.find(info.mOldName.get_path_wstring())) {
+			return false;
 		}
 
-		// 4. checking in remove
-		auto const& rmvOld = group.mFileName.get_remove().find(oldName);
-		if (rmvOld) {
-			model.next_available_item();
-			return;
+		if (addModel.find(info.mNewName.get_path_wstring())) {
+			return false;
+		}
+		return true;
+	}
+
+	bool directory_watcher_mgr::is_rename_one_time(rename_notify_info const& info, watching_group& group)
+	{
+		// method
+		// step 1: oldName must exist in add
+		// step 2: newName must NOT exist in add
+		// step 3: newName must NOT exist in remove
+		// step 4: newName must NOT exist in other oldname rename
+		// step 5: todo
+		auto oldName = info.mOldName.get_path_wstring();
+		auto newName = info.mNewName.get_path_wstring();
+
+		auto const& addModel = group.mFileName.get_add();
+		
+		// step 1
+		if (!addModel.find(oldName)) {
+			return false;
 		}
 
-		auto const& rmvNew = group.mFileName.get_remove().find(newName);
-		if (rmvNew) {
-			model.next_available_item();
-			return;
+		// step 2
+		if (addModel.find(newName)) {
+			return false;
 		}
 
-		// 5. checking in modify
-		auto const& modiOld = group.mFileName.get_modify().find(oldName);
-		if (modiOld) {
-			model.next_available_item();
-			return;
+		// step 3
+		if (group.mFileName.get_remove().find(newName)) {
+			return false;
 		}
 
-		auto const& modiNew = group.mFileName.get_modify().find(newName);
-		if (modiNew) {
-			model.next_available_item();
-			return;
+		// step 4
+		if (group.mFileName.get_rename().find_by_old_name(newName)) {
+			return false;
 		}
 
-		// 6. Finally this is 100% rename
-		SPDLOG_INFO(L"Rename: {} - {}", oldName, newName);
-		erase_rename(group, newName);
-		model.next_available_item();
+		return true;
 	}
 
 	void directory_watcher_mgr::checking_create(watching_group& group)
