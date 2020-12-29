@@ -120,6 +120,9 @@
     <ClInclude Include="file_activity\model_file_info.h">
       <Filter>File Activity\model</Filter>
     </ClInclude>
+    <ClInclude Include="file_activity\notify_to_server.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileWatcherDemo.cpp">
@@ -178,6 +181,9 @@
     </ClCompile>
     <ClCompile Include="file_activity\model_file_info.cpp">
       <Filter>File Activity\model</Filter>
+    </ClCompile>
+    <ClCompile Include="file_activity\notify_to_server.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

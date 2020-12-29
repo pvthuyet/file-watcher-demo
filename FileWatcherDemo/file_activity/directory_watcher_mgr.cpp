@@ -316,7 +316,7 @@ namespace died
 
 		// **case 3: save-as .txt by notepad
 		if (is_save_as_txt(info, group)) {
-			SPDLOG_INFO(L"Create save-as txt {}", key);
+			mSender.send(L"Create by save-as", key);
 			erase_all(group, key);
 			model.next_available_item();
 			return;
@@ -324,85 +324,11 @@ namespace died
 
 		// **case 4: only create
 		if (is_create_only_2(info, group)) {
-			SPDLOG_INFO(L"Create only {}", key);
+			mSender.send(L"Create only", key);
 			erase_all(group, key);
 			model.next_available_item();
 			return;
 		}
-	}
-
-	bool directory_watcher_mgr::is_temporary_file(file_notify_info const& info, watching_group& group)
-	{
-		// happen when download big file by save-as
-		// will create -> remove -> waiting to rename
-		auto key = info.get_path_wstring();
-		auto const& rmv = group.mFileName.get_remove().find(key);
-		std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
-		if (diff.count() > 0) {
-			return false;
-		}
-		return true;
-	}
-
-	bool directory_watcher_mgr::is_save_as_txt(file_notify_info const& info, watching_group& group)
-	{
-		auto key = info.get_path_wstring();
-		auto const& rmv = group.mFileName.get_remove().find(key);
-		if (!rmv) {
-			return false;
-		}
-
-		std::chrono::duration<double> diff1 = info.get_created_time() - rmv.get_created_time();
-		if (diff1.count() < 0) {
-			return false;
-		}
-
-		auto const& modi = group.mFileName.get_modify().find(key);
-		if (!modi) {
-			return false;
-		}
-
-		std::chrono::duration<double> diff2 = modi.get_created_time() - info.get_created_time();
-		if (diff2.count() < 0) {
-			return false;
-		}
-		return true;
-	}
-
-	bool directory_watcher_mgr::is_create_only_2(file_notify_info const& info, watching_group& group)
-	{
-		// **behaviour
-		// step 1. create 1.txt
-		// should not exist in others: remove, modify rename
-		auto key = info.get_path_wstring();
-
-		auto const& rmv = group.mFileName.get_remove().find(key);
-		if (rmv) {
-			return false;
-		}
-
-		auto const& modi = group.mFileName.get_modify().find(key);
-		if (modi) {
-			return false;
-		}
-
-		// Make sure this is not move action
-		// this happen when move file
-		// receive: add, delete (in the same disk)
-		// reveive: add, delete, modify (different disk)
-		for (auto& w : mWatchers) {
-			auto const& found = w.mFileName.get_remove().find_if([&info](auto const& item) {
-				return info.get_file_name_wstring() == item.get_file_name_wstring()
-					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
-				});
-
-			// this is not creation, lets other function checking this item
-			if (found) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	void directory_watcher_mgr::checking_remove(watching_group& group)
@@ -459,7 +385,7 @@ namespace died
 		}
 
 		// 100% only remove
-		SPDLOG_INFO(L"Remove: {}", key);
+		mSender.send(L"Remove", key);
 		model.erase(key);
 		model.next_available_item();
 	}
@@ -513,7 +439,7 @@ namespace died
 		}
 
 		// 100% modify
-		SPDLOG_INFO(L"Modify: {}", key);
+		mSender.send(L"Modify", key);
 		erase_all(group, key);
 		model.next_available_item();
 	}
@@ -595,7 +521,7 @@ namespace died
 		}
 
 		// 100% for edit emage by mspaint
-		SPDLOG_INFO(L"Modify: {}", key);
+		mSender.send(L"Modify without modify event", key);
 		erase_all(group, key);
 		// jump to next item for next step
 		model.next_available_item();
@@ -690,7 +616,7 @@ namespace died
 		}
 
 		// 100% copy
-		SPDLOG_INFO(L"Copy: {}", key);
+		mSender.send(L"Copy", key);
 		erase_all(group, key);
 		// jump to next item for next step
 		model.next_available_item();
@@ -774,13 +700,95 @@ namespace died
 			// The parent path must differnt
 			// 100% MOVE
 			if (found) {
-				SPDLOG_INFO(L"Move: {} - {}", found.get_path_wstring(), key);
+				mSender.send(L"Move", found.get_path_wstring() + L", " + key);
 				erase_all(group, key);
 				w.mFileName.get_remove().erase(found.get_path_wstring());
 				return;
 			}
 		}
 	}
+
+	bool directory_watcher_mgr::is_temporary_file(file_notify_info const& info, watching_group& group)
+	{
+		// happen when download big file by save-as
+		// will create -> remove -> waiting to rename
+		auto key = info.get_path_wstring();
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
+		if (diff.count() > 0) {
+			return false;
+		}
+		return true;
+	}
+
+	bool directory_watcher_mgr::is_save_as_txt(file_notify_info const& info, watching_group& group)
+	{
+		auto key = info.get_path_wstring();
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (!rmv) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff1 = info.get_created_time() - rmv.get_created_time();
+		if (diff1.count() < 0) {
+			return false;
+		}
+
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (!modi) {
+			return false;
+		}
+
+		std::chrono::duration<double> diff2 = modi.get_created_time() - info.get_created_time();
+		if (diff2.count() < 0) {
+			return false;
+		}
+		return true;
+	}
+
+	bool directory_watcher_mgr::is_create_only_2(file_notify_info const& info, watching_group& group)
+	{
+		// **behaviour
+		// step 1. create 1.txt
+		// should not exist in others: remove, modify rename
+		auto key = info.get_path_wstring();
+
+		auto const& rmv = group.mFileName.get_remove().find(key);
+		if (rmv) {
+			return false;
+		}
+
+		auto const& modi = group.mFileName.get_modify().find(key);
+		if (modi) {
+			return false;
+		}
+
+		// Make sure this is not move action
+		// this happen when move file
+		// receive: add, delete (in the same disk)
+		// reveive: add, delete, modify (different disk)
+		for (auto& w : mWatchers) {
+			auto const& found = w.mFileName.get_remove().find_if([&info](auto const& item) {
+				return info.get_file_name_wstring() == item.get_file_name_wstring()
+					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
+			});
+
+			// this is not creation, lets other function checking this item
+			if (found) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+
+
+
+
+
+
+
 
 	bool directory_watcher_mgr::is_create_only(file_notify_info const& info, watching_group& group)
 	{

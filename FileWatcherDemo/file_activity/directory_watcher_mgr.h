@@ -5,6 +5,7 @@
 #include "security_watcher.h"
 #include "folder_name_watcher.h"
 #include "task_timer.h"
+#include "notify_to_server.h"
 
 namespace died
 {
@@ -59,5 +60,6 @@ namespace died
 	private:
 		std::vector<watching_group> mWatchers;
 		std::shared_ptr<fat::UnnecessaryDirectory> mRule; //++ TODO
+		notify_to_server mSender;
 	};
 }

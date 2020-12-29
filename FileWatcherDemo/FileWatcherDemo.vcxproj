@@ -205,6 +205,7 @@
     <ClInclude Include="file_activity\idirectory_watcher.h" />
     <ClInclude Include="file_activity\iobserver.h" />
     <ClInclude Include="file_activity\irequest.h" />
+    <ClInclude Include="file_activity\notify_to_server.h" />
     <ClInclude Include="file_activity\observer_impl.h" />
     <ClInclude Include="file_activity\model_rename.h" />
     <ClInclude Include="file_activity\request_impl.h" />
@@ -229,6 +230,7 @@
     <ClCompile Include="file_activity\folder_name_watcher.cpp" />
     <ClCompile Include="file_activity\fxstd\src\string_helper.cpp" />
     <ClCompile Include="file_activity\fxstd\src\task_timer.cpp" />
+    <ClCompile Include="file_activity\notify_to_server.cpp" />
     <ClCompile Include="file_activity\observer_impl.cpp" />
     <ClCompile Include="file_activity\model_rename.cpp" />
     <ClCompile Include="file_activity\request_impl.cpp" />
