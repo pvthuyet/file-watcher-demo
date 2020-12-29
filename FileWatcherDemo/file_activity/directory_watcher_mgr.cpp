@@ -15,6 +15,9 @@ namespace died
 		mRule->addUserDefinePath(L"C:\\ProgramData\\");
 		mRule->addUserDefinePath(L"C:\\project\\");
 		mRule->addUserDefinePath(L"D:\\work\\");
+		mRule->addUserDefinePath(L"D:\\share\\");
+		mRule->addUserDefinePath(L"C:\\Program Files (x86)\\");
+		mRule->addUserDefinePath(L"C:\\Program Files\\");
 	}
 
 	bool directory_watcher_mgr::start(unsigned long notifyChange, bool subtree)
@@ -853,14 +856,28 @@ namespace died
 	bool directory_watcher_mgr::is_rename_only(rename_notify_info const& info, watching_group& group)
 	{
 		// oldName and newName should not exist in add
+		auto oldName = info.mOldName.get_path_wstring();
+		auto newName = info.mNewName.get_path_wstring();
+
 		auto const& addModel = group.mFileName.get_add();
-		if (addModel.find(info.mOldName.get_path_wstring())) {
+		if (addModel.find(oldName)) {
 			return false;
 		}
 
-		if (addModel.find(info.mNewName.get_path_wstring())) {
+		if (addModel.find(newName)) {
 			return false;
 		}
+
+		// oldName should not exist in other rename model
+		auto const& renameModel = group.mFileName.get_rename();
+		if (renameModel.find(oldName)) {
+			return false;
+		}
+
+		if (renameModel.find_by_old_name(newName)) {
+			return false;
+		}
+
 		return true;
 	}
 
