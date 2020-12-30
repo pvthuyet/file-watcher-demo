@@ -335,6 +335,10 @@ namespace died
 			// Waiting on this file
 			return;
 		}
+		if (died::fileIsProcessing(oldName, error)) {
+			// Waiting on this file
+			return;
+		}
 
 		// **case 1: only rename action
 		// happen when rename a file
