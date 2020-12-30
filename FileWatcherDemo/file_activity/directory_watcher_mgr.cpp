@@ -105,19 +105,38 @@ namespace died
 	void directory_watcher_mgr::erase_all(watching_group& group, std::wstring const& key)
 	{
 		SPDLOG_INFO(key);
+		// 1. attribute and security first
+		group.mAttr.get_model().erase(key);
+		group.mSecu.get_model().erase(key);
+
+		// 2. add, remove, modiy
 		group.mFileName.get_add().erase(key);
 		group.mFileName.get_remove().erase(key);
 		group.mFileName.get_modify().erase(key);
-		group.mAttr.get_model().erase(key);
-		group.mSecu.get_model().erase(key);
 	}
 
-	void directory_watcher_mgr::erase_rename(watching_group& group, std::wstring const& key)
+	void directory_watcher_mgr::erase_rename(watching_group& group, rename_notify_info const& info)
 	{
-		SPDLOG_INFO(key);
-		group.mFileName.get_rename().erase(key);
-		group.mAttr.get_model().erase(key);
-		group.mSecu.get_model().erase(key);
+		SPDLOG_INFO(info.get_key__());
+		auto oldName = info.mOldName.get_path_wstring();
+		auto newName = info.mNewName.get_path_wstring();
+
+		// 1. attribute and security first
+		group.mAttr.get_model().erase(oldName);
+		group.mSecu.get_model().erase(oldName);
+		group.mAttr.get_model().erase(newName);
+		group.mSecu.get_model().erase(newName);
+
+		// 2. add, remove, modiy
+		group.mFileName.get_add().erase(oldName);
+		group.mFileName.get_remove().erase(oldName);
+		group.mFileName.get_modify().erase(oldName);
+		group.mFileName.get_add().erase(newName);
+		group.mFileName.get_remove().erase(newName);
+		group.mFileName.get_modify().erase(newName);
+
+		// 3.rename
+		group.mFileName.get_rename().erase(info.get_key__());
 	}
 
 	void directory_watcher_mgr::checking_attribute(watching_group& group) 
@@ -154,7 +173,7 @@ namespace died
 			return;
 		}
 
-		if (group.mFileName.get_rename().find(key)) {
+		if (group.mFileName.get_rename().get_number_family(key) > 0) {
 			model.next_available_item();
 			return;
 		}
@@ -203,7 +222,7 @@ namespace died
 			return;
 		}
 
-		if (group.mFileName.get_rename().find(key)) {
+		if (group.mFileName.get_rename().get_number_family(key) > 0) {
 			model.next_available_item();
 			return;
 		}
@@ -331,84 +350,84 @@ namespace died
 
 		// 3. file is processing => ignore this file, jump to next one
 		int error{};
-		if (died::fileIsProcessing(newName, error)) {
-			// Waiting on this file
-			return;
-		}
-		if (died::fileIsProcessing(oldName, error)) {
-			// Waiting on this file
-			return;
-		}
+		bool isProcessing = died::fileIsProcessing(newName, error);
 
 		// **case 1: only rename action
 		// happen when rename a file
-		if (is_rename_only(info, group)) {
+		if (!isProcessing && is_rename_only(info, group)) {
 			mSender.send(L"Rename only", oldName + L", " + newName);
-			erase_rename(group, newName);
+			erase_rename(group, info);
 			model.next_available_item();
 			return;
 		}
 
-		// **case 2: rename 1 time
-		// happen when create a file by explore then rename
-		// consider as create file
-		if (is_rename_one_time(info, group)) {
-			auto const& add = group.mFileName.get_add().find(newName);
-			if (add) {
-				mSender.send(L"Create by rename", oldName + L", " + newName);
+		// **case 2: family rename, happen when 
+		// use Word: save-as, save
+		// use Excel: save
+		// Brower download file: auto-save
+		auto family = group.mFileName.get_rename().get_family(info);
+		auto numRename = family.size();
+
+		if (numRename >= 2) {
+			rename_notify_info const& before = family[0].get();
+			rename_notify_info const& after = family[1].get();
+
+			// 2.1 brower download file auto-save
+			if (is_rename_download_auto_save(group, before, after)) {
+				mSender.send(L"Create download auto-save", 
+					after.mNewName.get_path_wstring() + L", " +
+					after.mOldName.get_path_wstring() + L", "
+					+ before.mOldName.get_path_wstring());
+				erase_rename(group, after);
+				erase_rename(group, before);
+				model.next_available_item();
+				return;
 			}
-			else {
-				mSender.send(L"Modify by rename", oldName + L", " + newName);
+
+			// 2.3 Using Word
+			if (is_rename_word(group, before, after)) {
+				// 2.1.1 Save-as
+				// realFile exist in add model
+				std::wstring msgAction;
+				auto realNewName = after.mNewName.get_path_wstring();
+				if (group.mFileName.get_add().find(realNewName)) {
+					msgAction = L"Create Word save-as";
+				}
+				// 2.1.2 Save
+				// realFile not exist in add model
+				else {
+					msgAction = L"Modify Word save";
+				}
+				mSender.send(msgAction,
+					after.mNewName.get_path_wstring() + L", " +
+					after.mOldName.get_path_wstring() + L", "
+					+ before.mOldName.get_path_wstring());
+				erase_rename(group, after);
+				erase_rename(group, before);
+				model.next_available_item();
+				return;
 			}
-			erase_all(group, oldName);
-			erase_all(group, newName);
-			erase_rename(group, newName);
+
+			// 2.3 Excel save-as => save
+			// Actually, there is more 2 rename events
+			// Assume current event is create
+			mSender.send(L"Create excel save-as", newName + L", " + oldName);
+			erase_rename(group, info);
 			model.next_available_item();
 			return;
 		}
 
-		// **case 3: download auto-save
-		std::wstring realFile, temp1, temp2;
-		if (is_rename_download_auto_save(info, group, realFile, temp1, temp2)) {
-			mSender.send(L"Create download auto-save", realFile + L", " + temp1 + L", " + temp2);
-			erase_all(group, realFile);
-			erase_all(group, temp1);
-			erase_all(group, temp2);
-			erase_rename(group, realFile);
-			erase_rename(group, temp1);
-			erase_rename(group, temp2);
+		// **case 3: 1 event rename
+		// happen when: save-as brower, create and rename a file
+		if (!isProcessing && is_rename_one_time(info, group)) {
+			mSender.send(L"Create rename", newName + L", " + oldName);
+			erase_rename(group, info);
 			model.next_available_item();
 			return;
 		}
 
-		// **case 4: save-as word
-		if (is_rename_word_save_as(info, group, realFile, temp1, temp2)) {
-			mSender.send(L"Create word save-as", realFile + L", " + temp1 + L", " + temp2);
-			erase_all(group, realFile);
-			erase_all(group, temp1);
-			erase_all(group, temp2);
-			erase_rename(group, realFile);
-			erase_rename(group, temp1);
-			erase_rename(group, temp2);
-			model.next_available_item();
-			return;
-		}
-
-		// **case 5: save word
-		if (is_rename_word_save(info, group, realFile, temp1, temp2)) {
-			mSender.send(L"Modify word save", realFile + L", " + temp1 + L", " + temp2);
-			erase_all(group, realFile);
-			erase_all(group, temp1);
-			erase_all(group, temp2);
-			erase_rename(group, realFile);
-			erase_rename(group, temp1);
-			erase_rename(group, temp2);
-			model.next_available_item();
-			return;
-		}
-
-		// Here consider as not enough information
-		// so just wait
+		// Here we don't have enough information
+		// Hence, continue waiting on this file
 	}
 
 	void directory_watcher_mgr::checking_create(watching_group& group)
@@ -452,8 +471,7 @@ namespace died
 		// happen when download big file by save-as
 		// will create -> remove -> waiting to rename
 		if (is_temporary_file(info, group)) {
-			// will be processed later in rename
-			//++ TODO delete temporary
+			// will be processed in remove
 			model.next_available_item();
 			return;
 		}
@@ -503,7 +521,14 @@ namespace died
 			return;
 		}
 
-		// Case 2: should not exist in add
+		// case 2: clear the temporary file
+		if (is_temporary_file(info, group)) {
+			erase_all(group, key);
+			model.next_available_item();
+			return;
+		}
+
+		// Case 3: should not exist in add
 		// happen when edit image file
 		auto const& add = group.mFileName.get_add().find(key);
 		if (add) {
@@ -511,7 +536,7 @@ namespace died
 			return;
 		}
 
-		// case 3: 'filename' should not exist in any 'add model' of other groups
+		// case 4: 'filename' should not exist in any 'add model' of other groups
 		// happen when move file
 		// receive: add, delete (in the same disk)
 		// reveive: add, delete, modify (different disk)
@@ -636,7 +661,7 @@ namespace died
 		// happen when download big file by save-as
 		// will create -> remove -> waiting to rename
 		if (is_temporary_file(info, group)) {
-			// will be processed later in rename
+			// will be processed in remove
 			model.next_available_item();
 			return;
 		}
@@ -704,7 +729,7 @@ namespace died
 
 		// **case 1: should not exist in rename
 		// happen when save, save-as word
-		if (group.mFileName.exist_in_rename_any(key)) {
+ 		if (group.mFileName.exist_in_rename_any(key)) {
 			// will be processed in rename
 			model.next_available_item();
 			return;
@@ -714,7 +739,7 @@ namespace died
 		// happen when download big file by save-as
 		// will create -> remove -> waiting to rename
 		if (is_temporary_file(info, group)) {
-			// will be processed later in rename
+			// will be processed in remove
 			model.next_available_item();
 			return;
 		}
@@ -810,7 +835,7 @@ namespace died
 		// happen when download big file by save-as
 		// will create -> remove -> waiting to rename
 		if (is_temporary_file(info, group)) {
-			// will be processed later in rename
+			// will be process in remove
 			model.next_available_item();
 			return;
 		}
@@ -872,13 +897,8 @@ namespace died
 			return false;
 		}
 
-		// oldName should not exist in other rename model
-		auto const& renameModel = group.mFileName.get_rename();
-		if (renameModel.find(oldName)) {
-			return false;
-		}
-
-		if (renameModel.find_by_old_name(newName)) {
+		// Make sure oldName, newName appears only 1 time
+		if (!group.mFileName.get_rename().is_only_one_family_info(info)) {
 			return false;
 		}
 
@@ -892,9 +912,6 @@ namespace died
 		// step 2: newName must NOT exist in other 'oldname rename model'
 		// step 3: oldName must NOT exist in other 'newname rename model'
 
-		/// step 2: newName must NOT exist in add
-		// step 3: newName must NOT exist in remove
-
 		auto oldName = info.mOldName.get_path_wstring();
 		auto newName = info.mNewName.get_path_wstring();
 
@@ -906,20 +923,18 @@ namespace died
 		}
 
 		// step 2
-		auto const& renameModel = group.mFileName.get_rename();
-		if (renameModel.find_by_old_name(newName)) {
-			return false;
-		}
-
-		// step 3:
-		if (renameModel.find(oldName)) {
+		// Make sure oldName, newName appears only 1 time
+		if (!group.mFileName.get_rename().is_only_one_family_info(info)) {
 			return false;
 		}
 
 		return true;
 	}
 
-	bool directory_watcher_mgr::is_rename_download_auto_save(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2)
+	bool directory_watcher_mgr::is_rename_download_auto_save(
+		watching_group& group,
+		rename_notify_info const& before, 
+		rename_notify_info const& after)
 	{
 		// **behaviour
 		//step 1: create - D:\test\9be830ee-221a-4a6e-a369-c53ac5a76098.tmp
@@ -929,37 +944,25 @@ namespace died
 		//step 5: rename - D:\test\1.jpg.crdownload => D:\test\1.jpg
 		//step 6: modify - D:\test\1.jpg
 		//step 7: modify - D:\test\1.jpg
-		auto oldName = info.mOldName.get_path_wstring();
-		auto newName = info.mNewName.get_path_wstring();
-
-		// **case 1: rename at stpe 3
-		auto const& renNew = group.mFileName.get_rename().find_by_old_name(newName);
-		if (renNew) {
-			std::chrono::duration<double> diff = renNew.mNewName.get_created_time() - info.mNewName.get_created_time();
-			if (diff.count() > 0) {
-				realFile = renNew.mNewName.get_path_wstring();
-				temp1 = renNew.mOldName.get_path_wstring();
-				temp2 = info.mOldName.get_path_wstring();
-				return true;
+		auto istrue = sequence_rename(before, after);
+		if (!istrue) {
+			return false;
+		}
+		// newName must not exist in delete
+		auto const& rmv = group.mFileName.get_remove().find(after.mNewName.get_path_wstring());
+		if (rmv) {
+			std::chrono::duration<double> diff = after.mNewName.get_created_time() - rmv.get_created_time();
+			if (diff.count() < 0) {
+				return false;
 			}
 		}
-
-		// **case 2: rename at step 5
-		//auto const& renOld = group.mFileName.get_rename().find(oldName);
-		//if (renOld) {
-		//	std::chrono::duration<double> diff = info.mNewName.get_created_time() - renOld.mNewName.get_created_time();
-		//	if (diff.count() > 0) {
-		//		realFile = info.mNewName.get_path_wstring();
-		//		temp1 = info.mOldName.get_path_wstring();
-		//		temp2 = renOld.mOldName.get_path_wstring();
-		//		return true;
-		//	}
-		//}
-
-		return false;
+		return true;
 	}
 
-	bool directory_watcher_mgr::is_rename_word_save_as(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2)
+	bool directory_watcher_mgr::is_rename_word(
+		watching_group& group,
+		rename_notify_info const& before, 
+		rename_notify_info const& after)
 	{
 		//step 1: create - D:\test\8.docx
 		//step 2: remove - D:\test\8.docx
@@ -971,58 +974,20 @@ namespace died
 		//step 8: rename - D:\test\8.docx => D:\test\8.docx~RF1994986.TMP
 		//step 9: rename - D:\test\~.tmp => D:\test\8.docx
 		//step 10 remove - D:\test\8.docx~RF1994986.TMP
-		auto oldName = info.mOldName.get_path_wstring();
-		auto newName = info.mNewName.get_path_wstring();
-
-		// **case 1: at step 8
-		auto const& renNew = group.mFileName.get_rename().find(oldName);
-		if (renNew) {
-			std::chrono::duration<double> diff = renNew.mNewName.get_created_time() - info.mNewName.get_created_time();
-			if (diff.count() > 0) {
-				auto const& add = group.mFileName.get_add().find(renNew.mNewName.get_path_wstring());
-				if (add) {
-					std::chrono::duration<double> diff2 = renNew.mNewName.get_created_time() - add.get_created_time();
-					if (diff2.count() > 0) {
-						realFile = renNew.mNewName.get_path_wstring();
-						temp1 = renNew.mOldName.get_path_wstring();
-						temp2 = newName;
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	bool directory_watcher_mgr::is_rename_word_save(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2)
-	{
-		//step 1: create - D:\test\~.tmp
-		//step 2: modify - D:\test\~.tmp
-		//step 3: create - D:\test\9.docx~RF19b562f.TMP
-		//step 4: remove - D:\test\9.docx~RF19b562f.TMP
-		//step 5: rename - D:\test\9.docx => D:\test\9.docx~RF19b562f.TMP
-		//step 6: rename - D:\test\~.tmp => D:\test\9.docx
-		//step 7: remove - D:\test\9.docx~RF19b562f.TMP
-
-		auto oldName = info.mOldName.get_path_wstring();
-		auto newName = info.mNewName.get_path_wstring();
-
-		// **case 1: at step 5
-		auto const& renNew = group.mFileName.get_rename().find(oldName);
-		if (renNew) {
-			std::chrono::duration<double> diff = renNew.mNewName.get_created_time() - info.mNewName.get_created_time();
-			if (diff.count() > 0) {
-				auto const& add = group.mFileName.get_add().find(renNew.mNewName.get_path_wstring());
-				if (!add) {
-					realFile = renNew.mNewName.get_path_wstring();
-					temp1 = renNew.mOldName.get_path_wstring();
-					temp2 = newName;
-					return true;
-				}
-			}
+		auto istrue = circle_rename(before, after);
+		if (!istrue) {
+			return false;
 		}
 
-		return false;
+		// newName must not exist in delete
+		auto const& rmv = group.mFileName.get_remove().find(after.mNewName.get_path_wstring());
+		if (rmv) {
+			std::chrono::duration<double> diff = after.mNewName.get_created_time() - rmv.get_created_time();
+			if (diff.count() < 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	bool directory_watcher_mgr::is_temporary_file(file_notify_info const& info, watching_group& group)
@@ -1031,9 +996,29 @@ namespace died
 		// will create -> remove -> waiting to rename
 		auto key = info.get_path_wstring();
 		auto const& rmv = group.mFileName.get_remove().find(key);
-		std::chrono::duration<double> diff = info.get_created_time() - rmv.get_created_time();
-		if (diff.count() > 0) {
+		if (!rmv) {
 			return false;
+		}
+
+		// Consider as temporary file when exist remove and add or modify
+		auto const& add = group.mFileName.get_add().find(key);
+		auto const& modi = group.mFileName.get_add().find(key);
+		if (!add && !modi) {
+			return false;
+		}
+
+		if (add) {
+			std::chrono::duration<double> diff = rmv.get_created_time() - add.get_created_time();
+			if (diff.count() < 0) {
+				return false;
+			}
+		}
+
+		if (modi) {
+			std::chrono::duration<double> diff = rmv.get_created_time() - modi.get_created_time();
+			if (diff.count() < 0) {
+				return false;
+			}
 		}
 		return true;
 	}

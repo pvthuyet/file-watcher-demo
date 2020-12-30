@@ -27,7 +27,7 @@ namespace died
 	private:
 		TimerStatus onTimer() final;
 		void erase_all(watching_group& group, std::wstring const& key);
-		void erase_rename(watching_group& group, std::wstring const& key);
+		void erase_rename(watching_group& group, rename_notify_info const& info);
 
 		void checking_attribute(watching_group& group);
 		void checking_security(watching_group& group);
@@ -44,9 +44,16 @@ namespace died
 	private:
 		bool is_rename_only(rename_notify_info const& info, watching_group& group);
 		bool is_rename_one_time(rename_notify_info const& info, watching_group& group);
-		bool is_rename_download_auto_save(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2);
-		bool is_rename_word_save_as(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2);
-		bool is_rename_word_save(rename_notify_info const& info, watching_group& group, std::wstring& realFile, std::wstring& temp1, std::wstring& temp2);
+		
+		bool is_rename_download_auto_save(
+			watching_group& group,
+			rename_notify_info const& before, 
+			rename_notify_info const& after);
+		bool is_rename_word(
+			watching_group& group,
+			rename_notify_info const& before, 
+			rename_notify_info const& after);
+
 		bool is_temporary_file(file_notify_info const& info, watching_group& group);
 		bool is_save_as_txt(file_notify_info const& info, watching_group& group);
 		bool is_create_only(file_notify_info const& info, watching_group& group);
