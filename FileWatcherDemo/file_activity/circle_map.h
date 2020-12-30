@@ -116,6 +116,23 @@ namespace died
 			return found ? mData[pos] : EMPTY_ITEM;
 		}
 
+		template<class Func>
+		void loop_all(Func invoke) const
+		{
+			// empty map
+			if (empty()) {
+				return;
+			}
+			size_type pos = mPopIndex.load(std::memory_order_relaxed);
+			for (size_type i = 0; i < N; ++i) { // circle search
+				pos = (pos + i) % N;
+				const auto& item = mData[pos];
+				if (item) {
+					invoke(item);
+				}
+			}
+		}
+
 		reference operator[](key_type const& key)
 		{
 			// This function is considered as add item to map
