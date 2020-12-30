@@ -349,12 +349,20 @@ namespace died
 		auto newName = info.mNewName.get_path_wstring();
 
 		// 3. file is processing => ignore this file, jump to next one
+		static std::chrono::time_point<std::chrono::steady_clock> lastProcessingTime{};
 		int error{};
 		bool isProcessing = died::fileIsProcessing(newName, error);
+		if (isProcessing) {
+			lastProcessingTime = std::chrono::steady_clock::now();
+		}
+		// Just wait for stable file
+		constexpr unsigned long DELAY_FOR_STABLE = 1000; // milli-second
+		std::chrono::duration<double, std::milli> diff = std::chrono::steady_clock::now() - lastProcessingTime;
+		bool needDelay = diff.count() < DELAY_FOR_STABLE;
 
 		// **case 1: only rename action
 		// happen when rename a file
-		if (!isProcessing && is_rename_only(info, group)) {
+		if (!needDelay && is_rename_only(info, group)) {
 			mSender.send(L"Rename only", oldName + L", " + newName);
 			erase_rename(group, info);
 			model.next_available_item();
@@ -419,7 +427,7 @@ namespace died
 
 		// **case 3: 1 event rename
 		// happen when: save-as brower, create and rename a file
-		if (!isProcessing && is_rename_one_time(info, group)) {
+		if (!needDelay && is_rename_one_time(info, group)) {
 			mSender.send(L"Create rename", newName + L", " + oldName);
 			erase_rename(group, info);
 			model.next_available_item();
