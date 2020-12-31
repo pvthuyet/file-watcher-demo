@@ -105,12 +105,36 @@ namespace died
 			bool found = false;
 			size_type pos = mPopIndex.load(std::memory_order_relaxed);
 			for (size_type i = 0; i < N; ++i) { // circle search
-				pos = (pos + i) % N;
-				const auto& item = mData[pos];
+				size_type idx = (pos + i) % N;
+				const auto& item = mData[idx];
+				if (item && pre(item)) {
+					found = true;
+					pos = idx;
+					break;
+				}
+			}
+
+			return found ? mData[pos] : EMPTY_ITEM;
+		}
+
+		template<class Predicate>
+		const_reference rfind_if(Predicate pre) const
+		{
+			// empty map
+			if (empty()) {
+				return EMPTY_ITEM;
+			}
+
+			// not empty
+			bool found = false;
+			size_type pos = mPopIndex.load(std::memory_order_relaxed) + 1; // start with current pos
+			for (size_type i = 0; i < N; ++i) { // circle search
+				const auto& item = mData[--pos];
 				if (item && pre(item)) {
 					found = true;
 					break;
 				}
+				if (0 == pos) pos = N;
 			}
 
 			return found ? mData[pos] : EMPTY_ITEM;
@@ -125,11 +149,28 @@ namespace died
 			}
 			size_type pos = mPopIndex.load(std::memory_order_relaxed);
 			for (size_type i = 0; i < N; ++i) { // circle search
-				pos = (pos + i) % N;
-				const auto& item = mData[pos];
+				size_type idx = (pos + i) % N;
+				const auto& item = mData[idx];
 				if (item) {
 					invoke(item);
 				}
+			}
+		}
+
+		template<class Func>
+		void rloop_all(Func invoke) const
+		{
+			// empty map
+			if (empty()) {
+				return;
+			}
+			size_type pos = mPopIndex.load(std::memory_order_relaxed) + 1;
+			for (size_type i = 0; i < N; ++i) { // circle search
+				const auto& item = mData[--pos];
+				if (item) {
+					invoke(item);
+				}
+				if (0 == pos) pos = N;
 			}
 		}
 
@@ -176,26 +217,22 @@ namespace died
 				return mPopIndex.load(std::memory_order_relaxed);
 			}
 
-			bool found = false;
 			size_type old = mPopIndex.load(std::memory_order_relaxed);
 			size_type next = old;
 			for (size_type i = 0; i < N; ++i) { // Circle search
-				next = (next + 1) % N;
-				if (mData[next]) {
-					found = true;
+				size_type idx = (old + 1) % N;
+				if (mData[idx]) {
+					next = idx;
 					break;
 				}
 			}
 
 			// No more data
-			if (!found) {
+			if (next == old) {
 				// Mark as empty map
 				updateEmpty(true);
-			}
-
-			// The 'old' is already processed => should ignore it
-			if (found && next == old) {
-				next = (next + 1) % N;
+				// The 'old' is already processed => should ignore it
+				next = (old + 1) % N;
 			}
 
 			// avaible item => update to atomic
