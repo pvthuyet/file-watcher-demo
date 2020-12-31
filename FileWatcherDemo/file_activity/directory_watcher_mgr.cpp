@@ -381,7 +381,14 @@ namespace died
 			rename_notify_info const& after = family[1].get();
 
 			// 2.1 Should wait for stable file on second rename
+			// Should check on latest modify and second rename of new-name
+			auto finalName = after.mNewName.get_path_wstring();
 			if (DELAY_PROCESS > after.mNewName.alive()) {
+				// Waiting on this file
+				return;
+			}
+			auto const& modi = group.mFileName.get_modify().find(finalName);
+			if (modi && (DELAY_PROCESS > modi.alive())) {
 				// Waiting on this file
 				return;
 			}
@@ -389,7 +396,7 @@ namespace died
 			// 2.2 brower download file auto-save
 			if (is_rename_download_auto_save(group, before, after)) {
 				mSender.send(L"Create download auto-save", 
-					after.mNewName.get_path_wstring() + L", " +
+					finalName + L", " +
 					after.mOldName.get_path_wstring() + L", "
 					+ before.mOldName.get_path_wstring());
 				erase_rename(group, after);
@@ -403,8 +410,7 @@ namespace died
 				// 2.1.1 Save-as
 				// realFile exist in add model
 				std::wstring msgAction;
-				auto realNewName = after.mNewName.get_path_wstring();
-				if (group.mFileName.get_add().find(realNewName)) {
+				if (group.mFileName.get_add().find(finalName)) {
 					msgAction = L"Create Word save-as";
 				}
 				// 2.1.2 Save
@@ -413,7 +419,7 @@ namespace died
 					msgAction = L"Modify Word save";
 				}
 				mSender.send(msgAction,
-					after.mNewName.get_path_wstring() + L", " +
+					finalName + L", " +
 					after.mOldName.get_path_wstring() + L", "
 					+ before.mNewName.get_path_wstring());
 				erase_rename(group, after);
@@ -421,17 +427,19 @@ namespace died
 				model.next_available_item();
 				return;
 			}
+		}
 
-			// 2.4 Excel save-as => save
-			// Actually, there is more 2 rename events
-			// Assume current event is create
+		// **case 3: special case for Excel save-as => save
+		// Actually, there is more 2 rename events
+		// Assume current event is create
+		if (numRename >= 2) {
 			mSender.send(L"Create excel save-as", newName + L", " + oldName);
 			erase_rename(group, info);
 			model.next_available_item();
 			return;
 		}
 
-		// **case 3: 1 event rename
+		// **case 4: 1 event rename
 		// happen when: save-as brower, create and rename a file
 		if (!needDelay && is_rename_one_time(info, group)) {
 			mSender.send(L"Create rename", newName + L", " + oldName);
@@ -440,7 +448,7 @@ namespace died
 			return;
 		}
 
-		// Here we don't have enough information
+		// **case 5: we don't have enough information
 		// Hence, continue waiting on this file
 	}
 
