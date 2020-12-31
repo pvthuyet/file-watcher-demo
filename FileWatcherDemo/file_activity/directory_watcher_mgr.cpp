@@ -381,17 +381,19 @@ namespace died
 			rename_notify_info const& after = family[1].get();
 
 			// 2.1 Should wait for stable file on second rename
-			// Should check on latest modify and second rename of new-name
 			auto finalName = after.mNewName.get_path_wstring();
 			if (DELAY_PROCESS > after.mNewName.alive()) {
 				// Waiting on this file
 				return;
 			}
-			auto const& modi = group.mFileName.get_modify().find(finalName);
-			if (modi && (DELAY_PROCESS > modi.alive())) {
-				// Waiting on this file
-				return;
-			}
+
+			//++ TODO
+			// Should check on latest modify and second rename of new-name
+			//auto const& modi = group.mFileName.get_modify().find(finalName);
+			//if (modi && (DELAY_PROCESS > modi.alive())) {
+			//	// Waiting on this file
+			//	return;
+			//}
 
 			// 2.2 brower download file auto-save
 			if (is_rename_download_auto_save(group, before, after)) {
