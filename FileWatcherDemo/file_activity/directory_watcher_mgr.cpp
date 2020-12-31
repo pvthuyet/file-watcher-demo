@@ -387,14 +387,6 @@ namespace died
 				return;
 			}
 
-			//++ TODO
-			// Should check on latest modify and second rename of new-name
-			//auto const& modi = group.mFileName.get_modify().find(finalName);
-			//if (modi && (DELAY_PROCESS > modi.alive())) {
-			//	// Waiting on this file
-			//	return;
-			//}
-
 			// 2.2 brower download file auto-save
 			if (is_rename_download_auto_save(group, before, after)) {
 				mSender.send(L"Create download auto-save", 
@@ -429,19 +421,17 @@ namespace died
 				model.next_available_item();
 				return;
 			}
-		}
 
-		// **case 3: special case for Excel save-as => save
-		// Actually, there is more 2 rename events
-		// Assume current event is create
-		if (numRename >= 2) {
+			// **case 2.4: special case for Excel save-as => save
+			// Actually, there is more 2 rename events
+			// Assume current event is create
 			mSender.send(L"Create excel save-as", newName + L", " + oldName);
 			erase_rename(group, info);
 			model.next_available_item();
 			return;
 		}
 
-		// **case 4: 1 event rename
+		// **case 3: 1 event rename
 		// happen when: save-as brower, create and rename a file
 		if (!needDelay && is_rename_one_time(info, group)) {
 			mSender.send(L"Create rename", newName + L", " + oldName);
@@ -450,7 +440,7 @@ namespace died
 			return;
 		}
 
-		// **case 5: we don't have enough information
+		// **case 4: we don't have enough information
 		// Hence, continue waiting on this file
 	}
 
