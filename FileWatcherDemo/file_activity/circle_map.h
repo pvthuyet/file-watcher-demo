@@ -176,6 +176,16 @@ namespace died
 
 		reference operator[](key_type const& key)
 		{
+			//++ TODO
+			// Safe reset mKeys data
+			// reason: this called by push thread, always set empty is false
+			// pop thread update empty is true
+			// Whenever the empty is true, that mean no thread touch data
+			// So, safe to reset mKeys
+			//if (empty()) {
+			//	mKeys.clear();
+			//}
+
 			// This function is considered as add item to map
 			// Whenever it is called should change the empty state
 			updateEmpty(false);
