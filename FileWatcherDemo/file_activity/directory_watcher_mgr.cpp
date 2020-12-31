@@ -117,7 +117,7 @@ namespace died
 
 	void directory_watcher_mgr::erase_rename(watching_group& group, rename_notify_info const& info)
 	{
-		SPDLOG_INFO(info.get_key__());
+		SPDLOG_INFO(info.get_key());
 		auto oldName = info.mOldName.get_path_wstring();
 		auto newName = info.mNewName.get_path_wstring();
 
@@ -136,7 +136,7 @@ namespace died
 		group.mFileName.get_modify().erase(newName);
 
 		// 3.rename
-		group.mFileName.get_rename().erase(info.get_key__());
+		group.mFileName.get_rename().erase(info.get_key());
 	}
 
 	void directory_watcher_mgr::checking_attribute(watching_group& group) 

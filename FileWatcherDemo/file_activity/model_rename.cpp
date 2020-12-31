@@ -10,7 +10,7 @@ namespace died
 			&& (mOldName.get_parent_path_wstring() == mNewName.get_parent_path_wstring());
 	}
 
-	std::wstring rename_notify_info::get_key__() const
+	std::wstring rename_notify_info::get_key() const
 	{
 		return mOldName.get_path_wstring() + mNewName.get_path_wstring();
 	}
@@ -46,7 +46,7 @@ namespace died
 
 		// valid data
 		if (mInfo) {
-			auto key = mInfo.get_key__();
+			auto key = mInfo.get_key();
 			mData[std::move(key)] = std::move(mInfo);
 		}
 	}
@@ -54,11 +54,6 @@ namespace died
 	const rename_notify_info& model_rename::front() const
 	{
 		return mData.front();
-	}
-
-	const rename_notify_info& model_rename::find___(std::wstring const& key) const
-	{
-		return mData.find(key);
 	}
 
 	bool model_rename::is_only_one_family_info(rename_notify_info const& info) const
