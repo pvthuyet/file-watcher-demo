@@ -351,7 +351,7 @@ namespace died
 		// 3. file is processing => ignore this file, jump to next one
 		static std::chrono::time_point<std::chrono::steady_clock> lastProcessingTime{};
 		int error{};
-		bool isProcessing = died::fileIsProcessing(newName, error);
+		bool isProcessing = died::fileIsProcessing(newName, error) || died::fileIsProcessing(oldName, error);
 		if (isProcessing) {
 			lastProcessingTime = std::chrono::steady_clock::now();
 		}
@@ -380,7 +380,13 @@ namespace died
 			rename_notify_info const& before = family[0].get();
 			rename_notify_info const& after = family[1].get();
 
-			// 2.1 brower download file auto-save
+			// 2.1 Should wait for stable file on second rename
+			if (DELAY_PROCESS > after.mNewName.alive()) {
+				// Waiting on this file
+				return;
+			}
+
+			// 2.2 brower download file auto-save
 			if (is_rename_download_auto_save(group, before, after)) {
 				mSender.send(L"Create download auto-save", 
 					after.mNewName.get_path_wstring() + L", " +
@@ -409,14 +415,14 @@ namespace died
 				mSender.send(msgAction,
 					after.mNewName.get_path_wstring() + L", " +
 					after.mOldName.get_path_wstring() + L", "
-					+ before.mOldName.get_path_wstring());
+					+ before.mNewName.get_path_wstring());
 				erase_rename(group, after);
 				erase_rename(group, before);
 				model.next_available_item();
 				return;
 			}
 
-			// 2.3 Excel save-as => save
+			// 2.4 Excel save-as => save
 			// Actually, there is more 2 rename events
 			// Assume current event is create
 			mSender.send(L"Create excel save-as", newName + L", " + oldName);
@@ -952,8 +958,10 @@ namespace died
 		//step 5: rename - D:\test\1.jpg.crdownload => D:\test\1.jpg
 		//step 6: modify - D:\test\1.jpg
 		//step 7: modify - D:\test\1.jpg
-		auto istrue = sequence_rename(before, after);
-		if (!istrue) {
+		bool sequenceRename = before.mNewName.get_path_wstring() == after.mOldName.get_path_wstring()
+						   && before.mOldName.get_path_wstring() != after.mNewName.get_path_wstring();
+
+		if (!sequenceRename) {
 			return false;
 		}
 		// newName must not exist in delete
@@ -982,8 +990,10 @@ namespace died
 		//step 8: rename - D:\test\8.docx => D:\test\8.docx~RF1994986.TMP
 		//step 9: rename - D:\test\~.tmp => D:\test\8.docx
 		//step 10 remove - D:\test\8.docx~RF1994986.TMP
-		auto istrue = circle_rename(before, after);
-		if (!istrue) {
+		bool circleRename = before.mOldName.get_path_wstring() == after.mNewName.get_path_wstring()
+						 && before.mNewName.get_path_wstring() != after.mOldName.get_path_wstring();
+
+		if (!circleRename) {
 			return false;
 		}
 

@@ -18,8 +18,6 @@ namespace died
 		bool match_any(std::wstring const& key) const;
 	};
 	bool operator==(rename_notify_info const&, rename_notify_info const&);
-	bool sequence_rename(rename_notify_info const& before, rename_notify_info const& after);
-	bool circle_rename(rename_notify_info const& before, rename_notify_info const& after);
 	
 	/************************************************************************************************/
 

@@ -220,9 +220,8 @@ namespace died
 			size_type old = mPopIndex.load(std::memory_order_relaxed);
 			size_type next = old;
 			for (size_type i = 0; i < N; ++i) { // Circle search
-				size_type idx = (old + 1) % N;
-				if (mData[idx]) {
-					next = idx;
+				next = (next + 1) % N;
+				if (mData[next]) {
 					break;
 				}
 			}

@@ -26,18 +26,6 @@ namespace died
 		return lhs.mOldName == rhs.mOldName && lhs.mNewName == rhs.mNewName;
 	}
 
-	bool sequence_rename(rename_notify_info const& before, rename_notify_info const& after)
-	{
-		return before.mNewName.get_path_wstring() == after.mOldName.get_path_wstring()
-			&& before.mOldName.get_path_wstring() != after.mNewName.get_path_wstring();
-	}
-
-	bool circle_rename(rename_notify_info const& before, rename_notify_info const& after)
-	{
-		return before.mOldName.get_path_wstring() == after.mNewName.get_path_wstring()
-			&& before.mNewName.get_path_wstring() != after.mOldName.get_path_wstring();
-	}
-
 	/************************************************************************************************/
 
 	void model_rename::push(file_notify_info&& info)
