@@ -9,7 +9,7 @@
 namespace died
 {
 	template<
-		class KEY,
+		class Key,
 		class T,
 		unsigned int N = UINT_MAX - 1>
 	class circle_map final
@@ -18,7 +18,7 @@ namespace died
 		static_assert(N < UINT_MAX, "Map size must be less than UINT_MAX");
 
 	public:
-		using key_type = KEY;
+		using key_type = Key;
 		using mapped_type = T;
 		using size_type = unsigned int;
 		using con_vec = Concurrency::concurrent_vector<mapped_type>;
