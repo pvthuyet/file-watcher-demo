@@ -176,16 +176,6 @@ namespace died
 
 		reference operator[](key_type const& key)
 		{
-			//++ TODO
-			// Safe reset mKeys data
-			// reason: this called by push thread, always set empty is false
-			// pop thread update empty is true
-			// Whenever the empty is true, that mean no thread touch data
-			// So, safe to reset mKeys
-			//if (empty()) {
-			//	mKeys.clear();
-			//}
-
 			// This function is considered as add item to map
 			// Whenever it is called should change the empty state
 			updateEmpty(false);
@@ -238,10 +228,15 @@ namespace died
 
 			// No more data
 			if (next == old) {
-				// Mark as empty map
-				updateEmpty(true);
-				// The 'old' is already processed => should ignore it
-				next = (old + 1) % N;
+				if (!mData[next]) {
+					// Mark as empty map
+					updateEmpty(true);
+					//++ TODO: unsafe
+					mKeys.clear();
+				}
+				else { // The 'old' is already processed => should ignore it
+					next = (old + 1) % N;
+				}
 			}
 
 			// avaible item => update to atomic

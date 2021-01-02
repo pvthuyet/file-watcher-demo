@@ -3,7 +3,7 @@
 #include "iobserver.h"
 #include "idirectory_watcher.h"
 #include "spdlog_header.h"
-#include "gsl/gsl_assert"
+#include "gsl/assert"
 
 #include <shlwapi.h>
 #pragma comment(lib, "Shlwapi")
