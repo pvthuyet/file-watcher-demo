@@ -231,8 +231,7 @@ namespace died
 				if (!mData[next]) {
 					// Mark as empty map
 					updateEmpty(true);
-					//++ TODO: unsafe
-					mKeys.clear();
+					mKeys.clear(); //unsafe
 				}
 				else { // The 'old' is already processed => should ignore it
 					next = (old + 1) % N;
