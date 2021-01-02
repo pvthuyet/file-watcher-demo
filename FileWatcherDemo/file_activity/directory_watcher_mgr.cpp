@@ -35,37 +35,37 @@ namespace died
 		mWatchers.reserve(size);
 		
 		for (auto const& el : drives) {
-			watching_group group;
+			auto group = std::make_unique<watching_group>();
 			
 			// 1. watching file name
 			watching_setting setFileName(actionFileName, el, subtree);
-			group.mFileName.add_setting(std::move(setFileName));
-			group.mFileName.set_rule(mRule);
+			group->mFileName.add_setting(std::move(setFileName));
+			group->mFileName.set_rule(mRule);
 
 			// 2. watching attribute
 			watching_setting setAttr(actionAttr, el, subtree);
-			group.mAttr.add_setting(std::move(setAttr));
-			group.mAttr.set_rule(mRule);
+			group->mAttr.add_setting(std::move(setAttr));
+			group->mAttr.set_rule(mRule);
 
 			// 3. watching security
 			watching_setting setSecu(actionSecu, el, subtree);
-			group.mSecu.add_setting(std::move(setSecu));
-			group.mSecu.set_rule(mRule);
+			group->mSecu.add_setting(std::move(setSecu));
+			group->mSecu.set_rule(mRule);
 
 			// 4. watching folder name
 			watching_setting setFolderName(actionFolderName, el, subtree);
-			group.mFolderName.add_setting(std::move(setFolderName));
-			group.mFolderName.set_rule(mRule);
+			group->mFolderName.add_setting(std::move(setFolderName));
+			group->mFolderName.set_rule(mRule);
 
 			mWatchers.push_back(std::move(group));
 		}
 
 		// start watching
 		for (auto& el : mWatchers) {
-			el.mFileName.start();
-			el.mAttr.start();
-			el.mSecu.start();
-			el.mFolderName.start();
+			el->mFileName.start();
+			el->mAttr.start();
+			el->mSecu.start();
+			el->mFolderName.start();
 		}
 
 		// start timer thread
@@ -77,27 +77,28 @@ namespace died
 	{
 		stopTimer();
 		for (auto& el : mWatchers) {
-			el.mFileName.stop();
-			el.mAttr.stop();
-			el.mSecu.stop();
-			el.mFolderName.stop();
+			el->mFileName.stop();
+			el->mAttr.stop();
+			el->mSecu.stop();
+			el->mFolderName.stop();
 		}
 	}
 
 	TimerStatus directory_watcher_mgr::onTimer()
 	{
 		for (auto& el : mWatchers) {
-			checking_attribute(el);
-			checking_security(el);
-			checking_folder_remove(el);
-			checking_folder_move(el);
-			checking_rename(el);
-			checking_create(el);
-			checking_remove(el);
-			checking_modify(el);
-			checking_modify_without_modify_event(el);
-			checking_copy(el);
-			checking_move(el);
+			watching_group& grp = *el.get();
+			checking_attribute(grp);
+			checking_security(grp);
+			checking_folder_remove(grp);
+			checking_folder_move(grp);
+			checking_rename(grp);
+			checking_create(grp);
+			checking_remove(grp);
+			checking_modify(grp);
+			checking_modify_without_modify_event(grp);
+			checking_copy(grp);
+			checking_move(grp);
 		}
 		return TimerStatus::TIMER_CONTINUE;
 	}
@@ -260,7 +261,7 @@ namespace died
 		// receive: add, delete (in the same disk)
 		// reveive: add, delete, modify (different disk)
 		for (auto& w : mWatchers) {
-			auto const& found = w.mFolderName.get_add().find_if([&info](auto const& item) {
+			auto const& found = w->mFolderName.get_add().find_if([&info](auto const& item) {
 				return info.get_file_name_wstring() == item.get_file_name_wstring()
 					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
 			});
@@ -304,7 +305,7 @@ namespace died
 		// exist in remove but other path
 		// Should exist filename in other path
 		for (auto& w : mWatchers) {
-			auto const& found = w.mFolderName.get_remove().find_if([&info](auto const& item) {
+			auto const& found = w->mFolderName.get_remove().find_if([&info](auto const& item) {
 				return info.get_file_name_wstring() == item.get_file_name_wstring()
 					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
 			});
@@ -314,7 +315,7 @@ namespace died
 			if (found) {
 				mSender.send(L"Folder move", found.get_path_wstring() + L", " + key);
 				model.erase(key);
-				w.mFolderName.get_remove().erase(found.get_path_wstring());
+				w->mFolderName.get_remove().erase(found.get_path_wstring());
 				model.next_available_item();
 				return;
 			}
@@ -555,7 +556,7 @@ namespace died
 		// receive: add, delete (in the same disk)
 		// reveive: add, delete, modify (different disk)
 		for (auto& w : mWatchers) {
-			auto const& found = w.mFileName.get_add().find_if([&info](auto const& item) {
+			auto const& found = w->mFileName.get_add().find_if([&info](auto const& item) {
 				return info.get_file_name_wstring() == item.get_file_name_wstring()
 					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
 			});
@@ -789,7 +790,7 @@ namespace died
 
 		// Not action copy => maybe move
 		for (auto& w : mWatchers) {
-			auto const& found = w.mFileName.get_remove().find_if([&info](auto const& item) {
+			auto const& found = w->mFileName.get_remove().find_if([&info](auto const& item) {
 				return info.get_file_name_wstring() == item.get_file_name_wstring()
 					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
 			});
@@ -879,7 +880,7 @@ namespace died
 
 		// Should exist filename in other path
 		for (auto& w : mWatchers) {
-			auto const& found = w.mFileName.get_remove().find_if([&info](auto const& item) {
+			auto const& found = w->mFileName.get_remove().find_if([&info](auto const& item) {
 				return info.get_file_name_wstring() == item.get_file_name_wstring()
 					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
 			});
@@ -889,7 +890,7 @@ namespace died
 			if (found) {
 				mSender.send(L"Move", found.get_path_wstring() + L", " + key);
 				erase_all(group, key);
-				w.mFileName.get_remove().erase(found.get_path_wstring());
+				w->mFileName.get_remove().erase(found.get_path_wstring());
 				model.next_available_item();
 				return;
 			}
@@ -1088,7 +1089,7 @@ namespace died
 		// receive: add, delete (in the same disk)
 		// reveive: add, delete, modify (different disk)
 		for (auto& w : mWatchers) {
-			auto const& found = w.mFileName.get_remove().find_if([&info](auto const& item) {
+			auto const& found = w->mFileName.get_remove().find_if([&info](auto const& item) {
 				return info.get_file_name_wstring() == item.get_file_name_wstring()
 					&& info.get_parent_path_wstring() != item.get_parent_path_wstring();
 			});

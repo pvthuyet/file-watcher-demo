@@ -5,6 +5,7 @@
 #include <atomic>
 #include <limits>
 #include <algorithm>
+#include <shared_mutex>
 
 namespace died
 {
@@ -26,57 +27,41 @@ namespace died
 		using reference = mapped_type&;
 		using const_reference = const mapped_type&;
 
-	public:
-		circle_map() noexcept(std::is_nothrow_constructible_v<con_vec> && std::is_nothrow_constructible_v<con_map>) = default;
-		~circle_map() noexcept = default;
-
-		// copyable
-		circle_map(circle_map const& other) :
-			mEmpty{ other.mEmpty.load(std::memory_order_relaxed) },
-			mPushIndex{ other.mPushIndex.load(std::memory_order_relaxed) },
-			mPopIndex{ other.mPopIndex.load(std::memory_order_relaxed) },
-			mData{ other.mData },
-			mKeys{ other.mKeys }
-		{}
-
-		circle_map& operator=(circle_map const& other)
+	private:
+		class clear_map_condition
 		{
-			auto tmp(other);
-			*this = std::move(tmp);
-			return *this;
-		}
-
-		// movable
-		circle_map(circle_map&& other) noexcept:
-			mEmpty{ other.mEmpty.load(std::memory_order_relaxed) },
-			mPushIndex{ other.mPushIndex.load(std::memory_order_relaxed) },
-			mPopIndex{ other.mPopIndex.load(std::memory_order_relaxed) },
-			mData{ std::exchange(other.mData,  con_vec{}) },
-			mKeys{ std::exchange(other.mKeys, con_map{}) }
-		{
-			// reset other atomic
-			other.mEmpty.store(true, std::memory_order_relaxed);
-			other.mPushIndex.store(0, std::memory_order_relaxed);
-			other.mPopIndex.store(0, std::memory_order_relaxed);
-		}
-
-		circle_map& operator=(circle_map&& other) noexcept
-		{
-			if (this != &other) {
-				mEmpty.store(other.mEmpty.load(std::memory_order_relaxed));
-				mPushIndex.store(other.mPushIndex.load(std::memory_order_relaxed));
-				mPopIndex.store(other.mPopIndex.load(std::memory_order_relaxed));
-				mData = std::exchange(other.mData, con_vec{});
-				mKeys = std::exchange(other.mKeys, con_map{});
-
-				// reset other atomic
-				other.mEmpty.store(true, std::memory_order_relaxed);
-				other.mPushIndex.store(0, std::memory_order_relaxed);
-				other.mPopIndex.store(0, std::memory_order_relaxed);
+		public:
+			size_type increase() noexcept
+			{
+				return exceed() ? MAX_SIZE : ++mSize;
 			}
-			return *this;
-		}
 
+			size_type get() const noexcept
+			{
+				return mSize.load(std::memory_order_relaxed);
+			}
+
+			bool changed(size_type val) const noexcept
+			{
+				return val != get();
+			}
+
+			bool exceed() const noexcept
+			{
+				return get() > MAX_SIZE;
+			}
+
+			void clear()
+			{
+				mSize = 0;
+			}
+
+		private:
+			const size_type MAX_SIZE = std::max<size_type>(N, 10240);
+			std::atomic<size_type> mSize{};
+		};
+
+	public:
 		constexpr size_type size() const noexcept 
 		{ 
 			return N;
@@ -176,6 +161,9 @@ namespace died
 
 		reference operator[](key_type const& key)
 		{
+			std::shared_lock<std::shared_mutex> slk(mSyncClear);
+			mClearCond.increase();
+
 			// This function is considered as add item to map
 			// Whenever it is called should change the empty state
 			updateEmpty(false);
@@ -217,6 +205,7 @@ namespace died
 				return mPopIndex.load(std::memory_order_relaxed);
 			}
 
+			auto oldSize = mClearCond.get();
 			size_type old = mPopIndex.load(std::memory_order_relaxed);
 			size_type next = old;
 			for (size_type i = 0; i < N; ++i) { // Circle search
@@ -231,8 +220,9 @@ namespace died
 				if (!mData[next]) {
 					// Mark as empty map
 					updateEmpty(true);
-					//++ TODO: unsafe, potential race condition
-					mKeys.clear();
+					if (!mClearCond.changed(oldSize)) {
+						clear();
+					}
 				}
 				else { // The 'old' is already processed => should ignore it
 					next = (old + 1) % N;
@@ -277,13 +267,24 @@ namespace died
 			return old;
 		}
 
+		void clear()
+		{
+			if (mClearCond.exceed()) {
+				std::lock_guard<std::shared_mutex> lk(mSyncClear);
+				mKeys.clear();
+				mClearCond.clear();
+			}
+		}
+
 	private:
 		std::atomic_bool mEmpty{ true };
 		std::atomic<size_type> mPushIndex{ 0u };
 		std::atomic<size_type> mPopIndex{ 0u };
 		con_vec mData{ N };
-		con_map mKeys; // Doesn't have reserve()
-		const unsigned int	INVALID_INDEX = N + 1;
+		con_map mKeys;
+		const size_type		INVALID_INDEX = N + 1;
 		const mapped_type	EMPTY_ITEM{};
+		std::shared_mutex	mSyncClear;
+		clear_map_condition mClearCond;
 	};
 }

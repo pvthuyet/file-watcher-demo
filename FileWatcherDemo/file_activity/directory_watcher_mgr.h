@@ -59,7 +59,7 @@ namespace died
 		bool is_create_only(file_notify_info const& info, watching_group& group);
 
 	private:
-		std::vector<watching_group> mWatchers;
+		std::vector<std::unique_ptr<watching_group>> mWatchers;
 		std::shared_ptr<fat::UnnecessaryDirectory> mRule; //++ TODO
 		notify_to_server mSender;
 	};
