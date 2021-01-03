@@ -166,7 +166,7 @@ namespace died
 
 			// This function is considered as add item to map
 			// Whenever it is called should change the empty state
-			updateEmpty(false);
+			update_empty(false);
 
 			size_type pos = find_internal(key);
 			if (INVALID_INDEX != pos) {
@@ -219,7 +219,7 @@ namespace died
 			if (next == old) {
 				if (!mData[next]) {
 					// Mark as empty map
-					updateEmpty(true);
+					update_empty(true);
 					if (!mClearCond.changed(oldSize)) {
 						clear();
 					}
@@ -260,7 +260,7 @@ namespace died
 			return mPopIndex.load(std::memory_order_relaxed) % N; 
 		}
 
-		bool updateEmpty(bool val)
+		bool update_empty(bool val)
 		{
 			bool old = mEmpty.load(std::memory_order_relaxed);
 			while (!mEmpty.compare_exchange_weak(old, val, std::memory_order_release, std::memory_order_relaxed)) {}
